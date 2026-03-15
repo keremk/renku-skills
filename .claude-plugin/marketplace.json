@@ -1,0 +1,16 @@
+{
+  "name": "renku-skills",
+  "owner": {
+    "name": "Kerem Karatal"
+  },
+  "metadata": {
+    "description": "Marketplace for the Renku Claude Code plugin"
+  },
+  "plugins": [
+    {
+      "name": "renku-plugin",
+      "source": "./",
+      "description": "Renku workflow skills and subagents for Claude Code"
+    }
+  ]
+}

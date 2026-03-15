@@ -1,8 +1,10 @@
 {
   "name": "renku-plugin",
-  "description": "Skills for generating video compositions with Renku: create blueprints, generate media, and compose timelines.",
-  "version": "1.0.0",
+  "description": "Claude Code plugin with Renku skills and subagents for blueprint creation and model selection.",
+  "version": "1.0.1",
   "author": {
     "name": "Kerem Karatal"
-  }
+  },
+  "homepage": "https://gorenku.com",
+  "license": "MIT"
 }
