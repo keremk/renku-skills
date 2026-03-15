@@ -101,7 +101,19 @@ Claude Code desktop uses the same plugin system as CLI.
 
 Codex loads skills from `~/.agents/skills` (user scope) and from `.agents/skills` in repositories.
 
-For a user-level install from this repo:
+Recommended (from this repo root):
+
+```bash
+./scripts/install-codex-skills.sh
+```
+
+To remove only the symlinks created by this repo later:
+
+```bash
+./scripts/uninstall-codex-skills.sh
+```
+
+Manual equivalent:
 
 ```bash
 mkdir -p ~/.agents/skills
@@ -124,7 +136,7 @@ $create-blueprint
 
 Codex app uses the same skill locations as Codex CLI.
 
-1. Install skills to `~/.agents/skills` (same command as above).
+1. Install skills to `~/.agents/skills` (use `./scripts/install-codex-skills.sh`).
 2. Open/restart Codex app.
 3. Open **Skills** in the sidebar to confirm they loaded.
 4. Invoke with `$<skill-name>` (for example, `$create-blueprint`).
