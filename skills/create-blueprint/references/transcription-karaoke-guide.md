@@ -460,8 +460,6 @@ models:
   - model: gpt-5-mini
     provider: openai
     producerId: ScriptProducer
-    config:
-      text_format: json_schema
 
   - model: bytedance/seedance-1-pro-fast
     provider: replicate

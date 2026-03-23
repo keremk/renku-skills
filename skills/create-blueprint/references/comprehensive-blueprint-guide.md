@@ -1589,13 +1589,7 @@ models:
   - model: gpt-5-mini
     provider: openai
     producerId: ScriptProducer
-    config:
-      text_format: json_schema
 ```
-
-**Key fields:**
-
-- `config.text_format`: Use `json_schema` for structured output, `text` for plain text
 
 **Note:** The `promptFile` and `outputSchema` are defined in the producer YAML's `meta:` section. This keeps prompt configuration co-located with the producer logic.
 
@@ -1660,8 +1654,6 @@ models:
   - model: gpt-5-mini
     provider: openai
     producerId: DocProducer
-    config:
-      text_format: json_schema
   - model: bytedance/seedream/v4.5/text-to-image
     provider: fal-ai
     producerId: ImageProducer
