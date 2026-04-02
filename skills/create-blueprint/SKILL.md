@@ -20,6 +20,8 @@ Create Renku blueprints — YAML files that define video generation workflows by
 8. **Quality over speed for the director prompt.** The director prompt producer is the highest-leverage file — it generates ALL downstream prompts. The director-prompt-engineer subagent has full guidance on this.
 9. **Delegate specialized work.** Use the Task tool to spawn subagents for model selection (model-picker) and director prompt creation (director-prompt-engineer) at the appropriate steps.
 10. **Voice IDs are model-specific — never declare as blueprint inputs.** Voice identifiers (e.g., `VoiceId`, `TalkingHeadVoiceId`) vary per TTS provider and model and are not portable across providers. Do NOT add them to the blueprint `inputs:` section. Users configure them in the `models` section of the input template (as model-level config or default input values).
+11. **Only add media tracks the user explicitly requested.** Narration/TTS, background music, and transcription/karaoke are NOT implicit requirements — they must be explicitly mentioned by the user. Never add them speculatively. Step 2 covers Style, Audience, and Duration structure only.
+12. **Director output schema must only contain fields wired to downstream producers.** Do not add structured "story arc" or narrative metadata objects whose fields are never used in connections. If you want the director to reason about story structure, guide it in the system prompt — not in the JSON schema. Only fields that flow through connections belong in the output schema.
 
 ## Prerequisites
 
@@ -31,9 +33,18 @@ Create Renku blueprints — YAML files that define video generation workflows by
 
 ### Step 0: Scaffold the Project
 
+If the user explicitly asks to copy or start from a catalog blueprint, use the `--using` flag:
+```bash
+renku new:blueprint <project-name> --using <catalog-blueprint-name>
+```
+This only works with blueprints in the catalog (e.g., `documentary-talking-head`, `ken-burns`), not with other blueprints in the workspace folder.
+
+For a fresh blueprint:
 ```bash
 renku new:blueprint <project-name>
 ```
+
+**Before designing, scan existing workspace blueprints for reference patterns** (`ls ~/videos/` or the workspace root). Blueprints like `animated-cartoon`, `continuous-video`, and `celebrity-then-now` demonstrate proven connection patterns (last-frame chaining, variable image arrays, conditional fan-in). Read them for inspiration — but do not copy them unless the user explicitly asks. Use `renku new:blueprint` (not manual copy) to scaffold a new project.
 
 This creates:
 ```
@@ -55,12 +66,15 @@ When adding custom prompt producers, create subfolders:
 
 ### Step 1: Gather Requirements
 
-Understand from the user:
-- What type of video (documentary, ad, educational, music video, storyboard, etc.)
-- What media types are needed (images, videos, talking heads, narration, music)
-- How they compose into the final timeline (which tracks, segment structure)
+**Always use AskUserQuestion before designing.** Do not infer structure from existing blueprints and start building. Ask the user to confirm the following before proceeding:
 
-If anything is unclear, use **AskUserQuestion** to clarify.
+- What media types are needed? (video clips, images, narration audio, music, talking head, lipsync — list only what they mentioned and ask if anything else is needed)
+- Are there user-provided assets (images, reference photos, style images)? If so, how many and what are they for?
+- How many characters / segments / scenes are expected?
+- Are there any specific models or providers they want to use?
+- Is this a new blueprint, or a copy/adaptation of an existing catalog blueprint?
+
+Only proceed once you have enough to make definite choices. If the user has already given thorough details, a single confirmatory question is fine — but never skip asking entirely.
 
 See [Requirement Examples](./references/requirement-examples.md) for detailed analysis of common use cases.
 
@@ -93,6 +107,22 @@ Key rules:
 
 The subagent creates the complete prompt producer files (TOML, JSON schema, YAML).
 
+**Prompt producer `producer.yaml` valid structure:** Only these top-level sections are valid: `meta`, `inputs`, `artifacts`, `loops`. The `promptFile` and `outputSchema` references belong inside `meta:`, not as top-level sections. There is NO top-level `type:`, `prompts:`, or `output:` section. If the director-prompt-engineer subagent generates these, remove them immediately.
+
+```yaml
+meta:
+  id: MyDirector
+  kind: producer
+  version: 0.1.0
+  promptFile: ./prompts.toml        # ← inside meta
+  outputSchema: ./output-schema.json # ← inside meta
+
+inputs:
+  - name: MyInput
+    type: string
+# NO top-level "type:", "prompts:", or "output:" sections
+```
+
 The director MUST:
 - [ ] Define a narrative arc (hook → development → resolution)
 - [ ] Establish visual consistency rules (color palette, lighting, style keywords)
@@ -112,6 +142,34 @@ Based on the selected producers and director output schema, define:
 - **loops:** — Iteration dimensions (segment, image, clip, etc.)
 
 Remember: system inputs (`Duration`, `NumOfSegments`, `SegmentDuration`) are automatic — don't declare them in `inputs:`.
+
+**User-provided image arrays:**
+When the user will supply multiple images of the same kind (e.g., 2–3 style reference images, a set of character photos), use an array input — not individual named inputs:
+```yaml
+inputs:
+  - name: StyleReferenceImages
+    type: array
+    itemType: image
+    required: true
+  - name: NumOfStyleImages
+    type: int
+    required: true
+```
+Add a matching loop: `- name: styleImage, countInput: NumOfStyleImages`.
+
+To broadcast the **entire array as a collection** to a looped producer (e.g., all style images → every `CharacterImageProducer`), wire it directly without a loop index:
+```yaml
+- from: StyleReferenceImages
+  to: CharacterImageProducer[character].SourceImages  # whole-collection broadcast
+```
+**Do NOT** attempt to broadcast via a second loop index (`StyleReferenceImages[styleImage] → Producer[character].SourceImages[styleImage]`). Cross-dimension collection broadcasting causes R041. See [Common Errors Guide](./references/common-errors-guide.md).
+
+To give each producer instance **one specific element** (e.g., one celebrity photo per character), index by the producer's loop dimension:
+```yaml
+- from: CelebrityImages[character]
+  to: ImageProducer[character].SourceImages[0]  # one image per character, at slot 0
+```
+See `celebrity-then-now` in the workspace for the full reference pattern.
 
 **Artifacts completeness checklist** — work through every producer and verify each output is accounted for:
 - [ ] Every looped producer that produces a trackable output has a matching `array` artifact (e.g., `SegmentNarrationVideo`, `SegmentTalkingHeadVideo`, `SegmentNarrationAudio`, `SegmentTalkingHeadAudio`)
@@ -134,6 +192,18 @@ Build the `connections:` section that routes data between producers. This is the
 - **Fan-in:** `ImageProducer[segment].Image → TimelineComposer.ImageSegments` — collect loop outputs into an array
 - **Offset:** `ImageProducer[i].Image → VideoProducer[segment].SourceImage` — index shift between loops
 - **Conditional:** `Input:NarrationType → condition → different producer wiring` — route based on input value
+
+**Constant-index sub-field access on director outputs is not supported (known limitation):** You cannot use a hardcoded index followed by a field name on a director JSON array path. The validator rejects it because `[0]` is treated as an attempt to declare a dimension:
+```yaml
+# ❌ REJECTED — constant index + sub-field on a director output array
+- from: EpisodeDirector.Episode.Scenes[0].SceneImagePrompt
+  to: InitialSceneImageProducer.Prompt
+
+# ✅ WORKAROUND — promote it to a top-level scalar field in the director schema
+- from: EpisodeDirector.Episode.InitialSceneImagePrompt
+  to: InitialSceneImageProducer.Prompt
+```
+When you find yourself reaching for `[0]` on a director output path, move that field to a dedicated top-level scalar in the output schema instead.
 
 **Audio routing rule:** If audio is only used as video input (e.g., lipsync), do NOT route it as a separate audio track to the timeline. For transcription of lipsync videos, wire `AudioTrack` from the talking-head producer, not the original narration audio.
 
@@ -167,8 +237,17 @@ Fix any errors before proceeding. See [Common Errors Guide](./references/common-
 | E010 | Check producer's available inputs |
 | E021 | Remove circular dependency |
 | P053 | Remove `collectors:` — use connection-driven fan-in |
+| R041 | Cross-dimension collection conflict — use whole-collection broadcast (`from: Array to: Producer[loop].Input`) instead of secondary loop indexing |
 
 ### Step 9: Test with Dry Run
+
+**Verify model names match the catalog exactly before writing the input template.** Model names use `/` separators and include full version + variant suffixes. Look them up directly:
+```bash
+grep "^\s*- name:" <catalog>/models/fal-ai/fal-ai.yaml | grep <keyword>
+# Example: grep "^\s*- name:" catalog/models/fal-ai/fal-ai.yaml | grep seedream
+# → bytedance/seedream/v4.5/edit   (not "bytedance/seedream-4.5")
+```
+A wrong model name causes a dry-run error like: "No handler configured for fal-ai/<name>".
 
 Create a minimal inputs file with required values and model selections (from producer YAML `mappings` sections):
 

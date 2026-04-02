@@ -547,6 +547,42 @@ These errors occur during planning and execution.
 
 ---
 
+### R041: Conflicting Input Binding (Cross-Dimension Collection Broadcast)
+
+**Error:** Two connections attempt to bind different source values to the same producer input for the same loop instance. Typically caused by using a second loop dimension as both a source array index and a collection slot index simultaneously.
+
+**Example:**
+```yaml
+loops:
+  - name: character
+    countInput: NumOfCharacters
+  - name: styleImage
+    countInput: NumOfStyleImages
+
+connections:
+  # ❌ Causes R041: for CharacterImageProducer[0], the planner sees
+  #    StyleReferenceImages[0] AND StyleReferenceImages[1] competing
+  #    for SourceImages — a conflict it cannot resolve.
+  - from: StyleReferenceImages[styleImage]
+    to: CharacterImageProducer[character].SourceImages[styleImage]
+```
+
+**Fix:** Broadcast the entire array as a whole-collection to each producer instance. Drop the secondary loop entirely:
+```yaml
+loops:
+  - name: character
+    countInput: NumOfCharacters
+  # No styleImage loop needed
+
+connections:
+  # ✅ The full StyleReferenceImages array is passed as-is to each
+  #    character producer's SourceImages collection.
+  - from: StyleReferenceImages
+    to: CharacterImageProducer[character].SourceImages
+```
+
+---
+
 ### R050: Invalid JSON Path
 
 **Error:** A JSON path expression is malformed.
