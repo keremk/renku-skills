@@ -166,8 +166,8 @@ inputs:
 
 ```yaml
 inputs:
-  InquiryPrompt: 'The history of space exploration'
-  Style: 'Documentary'
+  InquiryPrompt: "The history of space exploration"
+  Style: "Documentary"
   Duration: 60 # System input - provided by user
   NumOfSegments: 6 # System input - provided by user
   # SegmentDuration is auto-computed as 60/6 = 10 seconds
@@ -358,12 +358,8 @@ inputs:
     type: string
     required: true
   - name: Resolution
-    description: The video resolution in 480p, 720p, 1080p
-    type: string
-    required: true
-  - name: AspectRatio
-    description: Aspect ratio such as 16:9 or 3:2.
-    type: string
+    description: Video resolution as width/height pixel dimensions.
+    type: resolution
     required: true
 
 artifacts:
@@ -411,8 +407,6 @@ connections:
     to: VideoProducer[segment].Prompt
   - from: Resolution
     to: VideoProducer[segment].Resolution
-  - from: AspectRatio
-    to: VideoProducer[segment].AspectRatio
   - from: SegmentDuration
     to: VideoProducer[segment].SegmentDuration # Auto-computed system input
 
@@ -555,12 +549,9 @@ inputs:
   - name: Prompt
     description: The prompt to generate the video.
     type: string
-  - name: AspectRatio
-    description: Aspect ratio such as 16:9 or 3:2.
-    type: string
   - name: Resolution
-    description: The video resolution (480p, 720p, 1080p). Model default varies.
-    type: string
+    description: Video resolution as width/height pixel dimensions.
+    type: resolution
   - name: SegmentDuration
     description: The video segment's duration in seconds. Model default varies.
     type: int
@@ -583,21 +574,30 @@ mappings:
   replicate:
     bytedance/seedance-1-pro-fast:
       Prompt: prompt
-      AspectRatio: aspect_ratio
-      Resolution: resolution
+      Resolution:
+        expand: true
+        resolution:
+          mode: aspectRatioAndPresetObject
+          aspectRatioField: aspect_ratio
+          presetField: resolution
       SegmentDuration: duration
     google/veo-3.1-fast:
       Prompt: prompt
-      AspectRatio: aspect_ratio
+      Resolution:
+        field: aspect_ratio
+        resolution:
+          mode: aspectRatio
   fal-ai:
     bytedance/seedream/v4.5/text-to-video:
       Prompt: prompt
-      AspectRatio:
+      Resolution:
         field: image_size
+        resolution:
+          mode: aspectRatio
         transform:
-          '16:9': landscape_16_9
-          '9:16': portrait_16_9
-          '1:1': square_hd
+          "16:9": landscape_16_9
+          "9:16": portrait_16_9
+          "1:1": square_hd
       SegmentDuration:
         field: num_frames
         durationToFrames:
@@ -925,16 +925,16 @@ Define named conditions in the `conditions:` section of your blueprint:
 conditions:
   isImageNarration:
     when: DocProducer.VideoScript.Segments[segment].NarrationType
-    is: 'ImageNarration'
+    is: "ImageNarration"
   isAudioNeeded:
     any:
       - when: DocProducer.VideoScript.Segments[segment].NarrationType
-        is: 'TalkingHead'
+        is: "TalkingHead"
       - when: DocProducer.VideoScript.Segments[segment].UseNarrationAudio
         is: true
   isTalkingHead:
     when: DocProducer.VideoScript.Segments[segment].NarrationType
-    is: 'TalkingHead'
+    is: "TalkingHead"
 ```
 
 #### Condition Path Format
@@ -978,7 +978,7 @@ conditions:
   needsAudio:
     any:
       - when: DocProducer.VideoScript.Segments[segment].NarrationType
-        is: 'TalkingHead'
+        is: "TalkingHead"
       - when: DocProducer.VideoScript.Segments[segment].UseNarrationAudio
         is: true
 
@@ -986,7 +986,7 @@ conditions:
   isHighQualityLongSegment:
     all:
       - when: DocProducer.VideoScript.Segments[segment].Quality
-        is: 'high'
+        is: "high"
       - when: DocProducer.VideoScript.Segments[segment].Duration
         greaterThan: 10
 ```
@@ -1002,8 +1002,8 @@ connections:
     to: ImageProducer[segment][image].Prompt
     if: isImageNarration
 
-  - from: AspectRatio
-    to: ImageProducer[segment][image].AspectRatio
+  - from: Resolution
+    to: ImageProducer[segment][image].Resolution
     if: isImageNarration
 
   # AudioProducer runs when TalkingHead OR UseNarrationAudio is true
@@ -1509,9 +1509,9 @@ You can override individual virtual artifacts in your input file:
 
 ```yaml
 inputs:
-  InquiryPrompt: 'The history of the moon landing'
+  InquiryPrompt: "The history of the moon landing"
   # Override a specific image prompt
-  DocProducer.VideoScript.Segments[0].ImagePrompts[0]: 'file:custom-prompt.txt'
+  DocProducer.VideoScript.Segments[0].ImagePrompts[0]: "file:custom-prompt.txt"
 ```
 
 This triggers re-runs only for:
@@ -1549,12 +1549,13 @@ models:
 ```yaml
 inputs:
   # User-provided inputs (declared in blueprint)
-  InquiryPrompt: 'Tell me about Darwin and Galapagos islands'
+  InquiryPrompt: "Tell me about Darwin and Galapagos islands"
   VoiceId: Wise_Woman
   Emotion: neutral
-  AspectRatio: '16:9'
-  Resolution: '480p'
-  Style: 'Ghibli'
+  Resolution:
+    width: 1280
+    height: 720
+  Style: "Ghibli"
 
   # System inputs - provide here, no blueprint declaration needed
   Duration: 30 # Total movie duration in seconds
@@ -1608,7 +1609,7 @@ models:
     producerId: AudioProducer
 ```
 
-The producer YAML files define how inputs like `Prompt`, `AspectRatio`, `Resolution` map to each provider's API fields.
+The producer YAML files define how inputs like `Prompt`, `Resolution`, and `Duration` map to each provider's API fields.
 
 #### Timeline Composer
 
@@ -1619,8 +1620,8 @@ models:
     producerId: TimelineComposer
     config:
       timeline:
-        tracks: ['Video', 'Audio', 'Music', 'Transcription']
-        masterTracks: ['Audio', 'Video']
+        tracks: ["Video", "Audio", "Music", "Transcription"]
+        masterTracks: ["Audio", "Video"]
         videoClip:
           artifact: VideoSegments
         audioClip:
@@ -1639,11 +1640,12 @@ models:
 ```yaml
 inputs:
   # User-provided inputs
-  InquiryPrompt: 'Life of Napoleon Bonaparte'
+  InquiryPrompt: "Life of Napoleon Bonaparte"
   NumOfImagesPerSegment: 2
-  Style: 'Ghibli'
-  AspectRatio: '16:9'
-  Size: '1K'
+  Style: "Ghibli"
+  Resolution:
+    width: 1280
+    height: 720
 
   # System inputs - provide here, no blueprint declaration needed
   Duration: 20 # Total movie duration
@@ -1661,8 +1663,8 @@ models:
     provider: renku
     producerId: TimelineComposer
     config:
-      tracks: ['Image']
-      masterTracks: ['Image']
+      tracks: ["Image"]
+      masterTracks: ["Image"]
       numTracks: 1
       imageClip:
         artifact: ImageSegments[Image]
@@ -1743,10 +1745,10 @@ models:
 
 ### Dimension Resolution
 
-| Rule             | Error Message                                                                                                                                           |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Size resolved    | `Missing size for dimension "${label}" on node "${nodeId}". Ensure the upstream artefact declares countInput or can derive this dimension from a loop.` |
-| Consistent sizes | `Dimension "${symbol}" has conflicting sizes (${existing} vs ${size})`                                                                                  |
+| Rule               | Error Message                                                                                                                                           |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Dimension resolved | `Missing size for dimension "${label}" on node "${nodeId}". Ensure the upstream artefact declares countInput or can derive this dimension from a loop.` |
+| Consistent sizes   | `Dimension "${symbol}" has conflicting sizes (${existing} vs ${size})`                                                                                  |
 
 ---
 

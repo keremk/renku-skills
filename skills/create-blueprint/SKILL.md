@@ -19,6 +19,7 @@ Create Renku blueprints — YAML files that define video generation workflows by
 7. **No legacy `collectors:` blocks.** Fan-in is connection-driven. See [Common Errors Guide](./references/common-errors-guide.md).
 8. **Quality over speed for the director prompt.** The director prompt producer is the highest-leverage file — it generates ALL downstream prompts. The director-prompt-engineer subagent has full guidance on this.
 9. **Delegate specialized work.** Use the Task tool to spawn subagents for model selection (model-picker) and director prompt creation (director-prompt-engineer) at the appropriate steps.
+10. **Voice IDs are model-specific — never declare as blueprint inputs.** Voice identifiers (e.g., `VoiceId`, `TalkingHeadVoiceId`) vary per TTS provider and model and are not portable across providers. Do NOT add them to the blueprint `inputs:` section. Users configure them in the `models` section of the input template (as model-level config or default input values).
 
 ## Prerequisites
 
@@ -111,6 +112,16 @@ Based on the selected producers and director output schema, define:
 - **loops:** — Iteration dimensions (segment, image, clip, etc.)
 
 Remember: system inputs (`Duration`, `NumOfSegments`, `SegmentDuration`) are automatic — don't declare them in `inputs:`.
+
+**Artifacts completeness checklist** — work through every producer and verify each output is accounted for:
+- [ ] Every looped producer that produces a trackable output has a matching `array` artifact (e.g., `SegmentNarrationVideo`, `SegmentTalkingHeadVideo`, `SegmentNarrationAudio`, `SegmentTalkingHeadAudio`)
+- [ ] Array artifacts use `countInput: NumOfSegments` (or the appropriate loop count input)
+- [ ] Scalar (non-looped) producer outputs that need tracking have a scalar artifact (e.g., `CharacterImage`)
+- [ ] The final rendered output is declared (e.g., `FinalVideo`, `Timeline`)
+- [ ] Each declared artifact has a corresponding `to: ArtifactName[segment]` connection wired from its producer
+
+**Never add as blueprint inputs:**
+- Voice identifiers (`VoiceId`, `TalkingHeadVoiceId`, etc.) — model-specific, configure in the `models` section of the input template instead (see Critical Rule 10)
 
 ### Step 6: Wire the Connection Graph
 
