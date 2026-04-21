@@ -66,7 +66,7 @@ Dynamic template with {{Variable1}} interpolation.
 
 ### 3.2 The YAML File (Producer Definition)
 
-The YAML file defines **what the producer accepts and produces**:
+The YAML file defines **what the producer accepts and exposes**:
 
 ```yaml
 meta:
@@ -82,7 +82,7 @@ inputs:
     description: Purpose
     type: string             # string, int, or other types
 
-artifacts:
+outputs:
   - name: OutputName
     type: json               # The structured output
     arrays:
@@ -249,7 +249,7 @@ The system prompt instructs: "Not all scenes need narration - some can be purely
 
 Key YAML artifact with offset:
 ```yaml
-artifacts:
+outputs:
   - name: ImagePrompts
     type: array
     itemType: string
@@ -269,7 +269,7 @@ The system prompt explains the sliding window concept directly to the LLM:
 
 Key YAML with nested arrays:
 ```yaml
-artifacts:
+outputs:
   - name: VideoScript
     type: json
     arrays:

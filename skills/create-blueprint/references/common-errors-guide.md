@@ -37,13 +37,13 @@ meta:
 
 ### P002: Missing Required Section
 
-**Error:** The blueprint is missing a required section (meta, artifacts).
+**Error:** The blueprint is missing a required section (meta, outputs).
 
 **Example:**
 
 ```yaml
 # Missing meta section
-artifacts:
+outputs:
   - name: Output
     type: video
 ```
@@ -55,7 +55,7 @@ meta:
   name: MyBlueprint
   version: 1.0.0
 
-artifacts:
+outputs:
   - name: Output
     type: video
 ```
@@ -98,7 +98,7 @@ inputs:
 **Fix:** Ensure artifacts have `name` and `type`:
 
 ```yaml
-artifacts:
+outputs:
   - name: Video
     type: video
 ```
@@ -118,7 +118,7 @@ artifacts:
 **Fix:** Use only one method:
 
 ```yaml
-producers:
+imports:
   - name: MyProducer
     path: producers/asset/image.yaml # Either path
     # OR
@@ -202,7 +202,7 @@ connections:
 **Example:**
 
 ```yaml
-producers:
+imports:
   - name: AudioProducer
     path: producers/asset/audio-tts.yaml
 
@@ -214,7 +214,7 @@ connections:
 **Fix:** Add the missing producer to the `producers[]` section:
 
 ```yaml
-producers:
+imports:
   - name: AudioProducer
     path: producers/asset/audio-tts.yaml
   - name: VideoProducer
@@ -266,7 +266,7 @@ inputs:
 **Example:**
 
 ```yaml
-artifacts:
+outputs:
   - name: GeneratedVideo
     type: video
 
@@ -278,7 +278,7 @@ connections:
 **Fix:** Declare the artifact:
 
 ```yaml
-artifacts:
+outputs:
   - name: GeneratedVideo
     type: video
   - name: MissingArtifact
@@ -434,7 +434,7 @@ inputs:
     type: int
     required: true
 
-artifacts:
+outputs:
   - name: Images
     type: array
     itemType: image
@@ -626,9 +626,9 @@ These errors occur during producer invocation.
 
 ---
 
-### S004: Unknown Artefact
+### S004: Unknown Artifact
 
-**Error:** `Unknown artefact "X" for producer invoke.`
+**Error:** `Unknown artifact "X" for producer invoke.`
 
 **Cause:** The producer is trying to produce an artifact not in its `produces` list.
 
@@ -670,7 +670,7 @@ These errors occur during producer invocation.
 
 ### S021: Missing Timeline
 
-**Error:** Export requires a timeline artefact.
+**Error:** Export requires a timeline artifact.
 
 ### S023: FFmpeg Not Found
 
@@ -764,9 +764,9 @@ export S3_BUCKET_NAME="your-bucket"
 
 ### W002: Unused Artifact
 
-**Warning:** An artifact is declared but nothing connects to it.
+**Warning:** An output is declared but nothing connects to it.
 
-**Fix:** Either remove the unused artifact or add a connection to it.
+**Fix:** Either remove the unused output or add a connection to it.
 
 ---
 
@@ -833,7 +833,7 @@ renku generate --last --inputs=<inputs.yaml> --pin="Artifact:..."
 
 **Cause:** Contradictory command flags.
 
-**Fix:** Remove the artifact from either `--pin` or `--artifact-id/--aid`.
+**Fix:** Remove the artifact from either `--pin` or `--regen`.
 
 ---
 

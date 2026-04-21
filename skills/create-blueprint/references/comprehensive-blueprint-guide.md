@@ -52,7 +52,7 @@ Renku is a workflow orchestration system for generating long-form video content 
 │                              Runner                                  │
 │  • Executes jobs layer by layer                                     │
 │  • Resolves inputs from upstream artifacts                          │
-│  • Materializes fan-in collections                                  │
+│  • Materializes fan-in arrays                                  │
 │  • Invokes AI providers via producer implementations                │
 │  • Stores artifacts and logs events                                 │
 └─────────────────────────────────────────────────────────────────────┘
@@ -83,7 +83,7 @@ Renku is a workflow orchestration system for generating long-form video content 
 
 | Term             | Definition                                                                                                                                                                                  |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Blueprint**    | Top-level YAML that orchestrates a complete workflow. Defines inputs, artifacts, loops, producer imports, and connections.                                                                  |
+| **Blueprint**    | Top-level YAML that orchestrates a complete workflow. Defines inputs, artifacts, loops, blueprint imports, and connections.                                                                  |
 | **Producer**     | A reusable module that invokes one or more AI models. Producers are referenced by blueprints via the `producers:` section.                                                                  |
 | **Input**        | A user-provided value. Mark `required: true` unless a sensible `default` exists. For producers, required and defaults are read from the input JSON schemas.                                 |
 | **Artifact**     | An output produced by a producer. Can be scalar (single value) or array (indexed by loops).                                                                                                 |
@@ -95,7 +95,7 @@ Renku is a workflow orchestration system for generating long-form video content 
 
 ### System Inputs
 
-System inputs are special inputs that Renku automatically recognizes by name. **You do not need to declare these in your blueprint's `inputs:` section** - they are automatically available when referenced in connections. You only need to provide their values in the input YAML file.
+System inputs are special inputs that Renku automatically recognizes by name. Author them intentionally: top-level orchestration blueprints should declare user-facing timing inputs such as `Duration` and `NumOfSegments` in `inputs:` when the workflow depends on them, while derived/runtime values such as `SegmentDuration`, `MovieId`, `StorageRoot`, and `StorageBasePath` should not be exposed as top-level user inputs. Prompt producers may declare `Duration` and `SegmentDuration` if they consume them, and media producers that output audio or video must declare a required `Duration` input.
 
 #### Available System Inputs
 
@@ -110,41 +110,43 @@ System inputs are special inputs that Renku automatically recognizes by name. **
 
 #### How System Inputs Work
 
-1. **Do NOT declare in blueprint `inputs:`**: System inputs must not be listed in the blueprint's `inputs:` section. They are common to all blueprints and are automatically recognized by the system when referenced in connections.
-2. **DO wire explicitly in `connections:`**: Even though system inputs don't need declaration, you must explicitly wire them in the blueprint's `connections:` section to any producer that needs them. They are not automatically passed to producers.
-3. **Provide in input YAML**: User-provided system inputs (`Duration`, `NumOfSegments`) are specified in the input template file.
-4. **Auto-computed values**: `SegmentDuration` is automatically calculated as `Duration / NumOfSegments`.
-5. **User overrides**: If you explicitly provide `SegmentDuration` in your input YAML, it won't be auto-computed.
-6. **Producer inputs**: Prompt producers and other producers that consume system inputs must declare them in their own `inputs:` section (e.g., the prompt producer YAML should list `SegmentDuration` as an input if it uses `{{SegmentDuration}}` in its TOML template).
+1. **Declare user-facing timing inputs on top-level blueprints**: If users are expected to provide `Duration` and `NumOfSegments`, declare them in the orchestration blueprint's `inputs:` section.
+2. **Do NOT expose derived/runtime values as top-level inputs**: `SegmentDuration`, `MovieId`, `StorageRoot`, and `StorageBasePath` should not appear as user-facing blueprint inputs.
+3. **DO wire explicitly in `connections:`**: System-derived values are not magically passed to producers; wire them explicitly where needed.
+4. **Provide only user-facing timing values in input YAML**: Users provide `Duration` and `NumOfSegments` in the input template file.
+5. **Auto-computed values**: `SegmentDuration` is calculated internally as `Duration / NumOfSegments`.
+6. **Producer inputs**: Prompt producers and other non-media producers may declare `Duration` and `SegmentDuration` if they consume them. Media producers that emit audio or video must declare a required `Duration` input.
 
 #### Example: Using System Inputs
 
-**Blueprint — do NOT declare system inputs, but DO wire them explicitly:**
+**Top-level orchestration blueprint — declare user-facing timing inputs, but keep derived ones internal:**
 
 ```yaml
 inputs:
-  # Only declare non-system inputs here
+  - name: Duration
+    type: int
+    required: true
+  - name: NumOfSegments
+    type: int
+    required: true
   - name: InquiryPrompt
     type: string
     required: true
   - name: Style
     type: string
     required: true
-  # Duration, NumOfSegments, SegmentDuration are system inputs
-  # Do NOT declare them here — they are automatically available for wiring
 
 loops:
   - name: segment
-    countInput: NumOfSegments # References system input directly
+    countInput: NumOfSegments
 
 connections:
-  # System inputs must be explicitly wired to producers that need them
   - from: Duration
     to: ScriptProducer.Duration
   - from: NumOfSegments
     to: ScriptProducer.NumOfSegments
   - from: SegmentDuration
-    to: ScriptProducer.SegmentDuration # Auto-computed value, wired explicitly
+    to: ScriptProducer.SegmentDuration
 ```
 
 **Prompt producer YAML — DO declare system inputs it consumes:**
@@ -168,16 +170,16 @@ inputs:
 inputs:
   InquiryPrompt: "The history of space exploration"
   Style: "Documentary"
-  Duration: 60 # System input - provided by user
-  NumOfSegments: 6 # System input - provided by user
-  # SegmentDuration is auto-computed as 60/6 = 10 seconds
+  Duration: 60 # User-provided total movie duration
+  NumOfSegments: 6 # User-provided segment count
+  # SegmentDuration is derived internally as 60/6 = 10 seconds
 ```
 
 #### Benefits of System Inputs
 
-- **Less boilerplate**: No need to declare common inputs in every blueprint
-- **Automatic computation**: `SegmentDuration` is computed automatically
-- **Consistent naming**: Standardized names across all blueprints
+- **Clear public contracts**: Top-level blueprints make user-facing timing inputs explicit
+- **Automatic computation**: `SegmentDuration` is derived internally
+- **Consistent naming**: Standardized names across all blueprints and producers
 - **Provider access**: Timeline composers and video exporters automatically receive `MovieId`, `StorageRoot`, `StorageBasePath`
 
 ### Blueprint vs Producer
@@ -203,7 +205,7 @@ Data flows through the system via **connections**:
 ```
 Blueprint Input ──► Producer Input ──► Producer ──► Artifact ──► Next Producer Input
                                                           │
-                                                          └──► Blueprint Artifact
+                                                          └──► Blueprint Output
 ```
 
 For looped producers, data flows through indexed connections:
@@ -234,8 +236,10 @@ inputs:
     description: <string> # Purpose and usage
     type: <string> # Data type (required)
     required: <boolean> # Whether mandatory (default: true)
+    itemType: <string> # Element type for array inputs
+    countInput: <string> # Required for grouped array inputs in Viewer Input Panel
 
-artifacts:
+outputs:
   - name: <string> # Artifact identifier in PascalCase (required)
     description: <string> # Purpose and content
     type: <string> # Output type (required)
@@ -250,7 +254,7 @@ loops:
     countInputOffset: <int> # Offset added to count
     parent: <string> # Parent loop for nesting
 
-producers:
+imports:
   - name: <string> # Producer instance name in PascalCase (required)
     producer: <string> # Qualified name: "category/name" (preferred)
     path: <string> # Relative path to producer YAML (legacy, for custom producers)
@@ -285,9 +289,11 @@ conditions:
 | Field         | Type    | Required | Description                                                      |
 | ------------- | ------- | -------- | ---------------------------------------------------------------- |
 | `name`        | string  | Yes      | Identifier in PascalCase                                         |
-| `type`        | string  | Yes      | `string`, `int`, `image`, `audio`, `video`, `json`, `collection` |
+| `type`        | string  | Yes      | `string`, `int`, `image`, `audio`, `video`, `json`, `array` |
 | `required`    | boolean | No       | Default: `true`                                                  |
 | `description` | string  | No       | Documentation                                                    |
+| `itemType`    | string  | Conditional | Recommended when `type: array` to define element type           |
+| `countInput`  | string  | Conditional | Required for `type: array` inputs that should be grouped in Viewer Input Panel |
 
 **Types:**
 
@@ -295,7 +301,21 @@ conditions:
 - `int`: Integer number
 - `image`, `audio`, `video`: Media file reference
 - `json`: Structured JSON data
-- `collection`: Array of items (used with `fanIn: true` in producers)
+- `array`: Indexed input list. Use `countInput` to tie it to a loop/count input.
+
+**Viewer grouping rule for array inputs:** If multiple `inputs` should stay synchronized and appear as one grouped editor in the Viewer Input Panel, each input must use `type: array` and reference the same `countInput`.
+
+```yaml
+inputs:
+  - name: SceneVideoPrompt
+    type: array
+    itemType: text
+    countInput: NumOfSegments
+  - name: StoryboardImagePrompt
+    type: array
+    itemType: text
+    countInput: NumOfSegments
+```
 
 #### `artifacts`
 
@@ -347,8 +367,14 @@ meta:
   license: MIT
 
 inputs:
-  # Note: Duration, NumOfSegments, SegmentDuration are system inputs
-  # They don't need to be declared here - just provide values in input YAML
+  - name: Duration
+    description: Total movie duration in seconds.
+    type: int
+    required: true
+  - name: NumOfSegments
+    description: Number of segments to generate.
+    type: int
+    required: true
   - name: InquiryPrompt
     description: The prompt describing the movie script to be generated.
     type: string
@@ -362,7 +388,7 @@ inputs:
     type: resolution
     required: true
 
-artifacts:
+outputs:
   - name: SegmentVideo
     description: Generated video for each narration segment.
     type: array
@@ -374,7 +400,7 @@ loops:
     description: Iterates over narration segments.
     countInput: NumOfSegments # References system input
 
-producers:
+imports:
   - name: ScriptProducer
     producer: prompt/script
   - name: VideoPromptProducer
@@ -438,10 +464,10 @@ inputs:
   - name: <string>         # Input identifier (required)
     description: <string>  # Purpose and usage
     type: <string>         # Data type (required)
-    fanIn: <boolean>       # Whether this is a fan-in collection input
-    dimensions: <string>   # Dimension labels for collections (e.g., "segment")
+    fanIn: <boolean>       # Whether this is a fan-in array input
+    dimensions: <string>   # Dimension labels for arrays (e.g., "segment")
 
-artifacts:
+outputs:
   - name: <string>         # Artifact identifier (required)
     description: <string>  # Purpose and content
     type: <string>         # Output type (required)
@@ -513,7 +539,7 @@ inputs:
     description: Narration language. Model default varies.
     type: string
 
-artifacts:
+outputs:
   - name: MovieTitle
     description: The generated title for the documentary.
     type: string
@@ -556,7 +582,7 @@ inputs:
     description: The video segment's duration in seconds. Model default varies.
     type: int
 
-artifacts:
+outputs:
   - name: SegmentVideo
     description: Video file for the segment.
     type: video
@@ -667,7 +693,7 @@ inputs:
     description: Speech speed multiplier.
     type: number
 
-artifacts:
+outputs:
   - name: SegmentAudio
     description: Narrated audio file for the segment.
     type: audio
@@ -705,19 +731,19 @@ meta:
 inputs:
   - name: ImageSegments
     description: Collected image assets grouped per segment.
-    type: collection
+    type: array
     itemType: image
     dimensions: segment.image
     fanIn: true
   - name: VideoSegments
     description: Collected video assets grouped per narration segment.
-    type: collection
+    type: array
     itemType: video
     dimensions: segment
     fanIn: true
   - name: AudioSegments
     description: Narration audio clips grouped per segment (master track).
-    type: collection
+    type: array
     itemType: audio
     dimensions: segment
     fanIn: true
@@ -729,7 +755,7 @@ inputs:
     description: Total duration of the movie in seconds.
     type: int
 
-artifacts:
+outputs:
   - name: Timeline
     description: OrderedTimeline JSON manifest.
     type: json
@@ -781,7 +807,7 @@ loops:
     countInput: NumOfImagesPerNarrative
 
 # Producer runs for each segment × image combination
-producers:
+imports:
   - name: ImageProducer
     producer: asset/text-to-image
     loop: segment.image # Dot notation for nested loops
@@ -833,13 +859,13 @@ connections:
 
 Hardcoded indices (`[0]`, `[1]`) select specific array elements.
 
-#### Indexed Collection Binding
+#### Indexed Array Binding
 
-When a producer has a collection input (like `ReferenceImages`), you can connect different artifacts to specific indices of that collection:
+When a producer has an array input (like `ReferenceImages`), you can connect different artifacts to specific indices of that array:
 
 ```yaml
 connections:
-  # Different artifacts bound to specific collection indices
+  # Different artifacts bound to specific array indices
   - from: CharacterImageProducer.GeneratedImage
     to: VideoProducer[clip].ReferenceImages[0]
   - from: ProductImageProducer.GeneratedImage
@@ -848,7 +874,7 @@ connections:
 
 This pattern is useful when:
 
-- A producer accepts multiple reference images as a collection
+- A producer accepts multiple reference images as an array
 - Each reference image comes from a different upstream producer
 - The same images should be used for all loop instances (broadcast + element binding)
 
@@ -861,7 +887,7 @@ This pattern is useful when:
 **Example: Ad Video with Character and Product Images**
 
 ```yaml
-producers:
+imports:
   - name: CharacterImageProducer
     producer: asset/text-to-image
   - name: ProductImageProducer
@@ -882,11 +908,11 @@ connections:
     to: VideoProducer[clip].Prompt
 ```
 
-**Comparison with whole-collection binding:**
+**Comparison with whole-array binding:**
 
 | Pattern          | Syntax                                                       | Use Case                                         |
 | ---------------- | ------------------------------------------------------------ | ------------------------------------------------ |
-| Whole-collection | `AllImages → ReferenceImages`                                | Connect an entire array artifact                 |
+| Whole-array | `AllImages → ReferenceImages`                                | Connect an entire array artifact                 |
 | Element-level    | `Image1 → ReferenceImages[0]`, `Image2 → ReferenceImages[1]` | Connect individual artifacts to specific indices |
 
 Both patterns are supported and can be mixed depending on your workflow needs.
@@ -1112,7 +1138,7 @@ This creates a two-dimensional iteration space. If `NumOfSegments = 3` and `NumO
 ### Assigning Producers to Loops
 
 ```yaml
-producers:
+imports:
   - name: ScriptProducer
     path: ./script.yaml
     # No loop - runs once
@@ -1178,7 +1204,7 @@ The target input must be marked as `fanIn: true` in the producer:
 inputs:
   - name: VideoSegments
     description: Collected video assets grouped per narration segment.
-    type: collection
+    type: array
     itemType: video
     dimensions: segment
     fanIn: true
@@ -1213,7 +1239,7 @@ loops:
     countInput: NumOfSegments
     countInputOffset: 1 # N+1 images for N segments
 
-producers:
+imports:
   - name: ImageProducer
     producer: asset/text-to-image
     loop: segment
@@ -1265,7 +1291,7 @@ Type:path.to.name[index0][index1]...
 | ------------------------------------------- | ---------------------------- |
 | `Input:InquiryPrompt`                       | Blueprint-level input        |
 | `Input:ScriptProducer.Duration`             | Input to ScriptProducer      |
-| `Artifact:VideoProducer.SegmentVideo[0]`    | First video artifact         |
+| `Artifact:VideoProducer.SegmentVideo[0]`    | First runtime video artifact |
 | `Artifact:ImageProducer.SegmentImage[2][1]` | Image at segment 2, image 1  |
 | `Producer:AudioProducer[0]`                 | First AudioProducer instance |
 
@@ -1306,7 +1332,7 @@ parseCanonicalArtifactId(id); // Returns { type, path, name, indices }
 
 #### 1. Blueprint Tree Loading
 
-The planner loads the blueprint and all producer imports recursively:
+The planner loads the blueprint and all blueprint imports recursively:
 
 ```typescript
 loadYamlBlueprintTree(blueprintPath);
@@ -1341,7 +1367,7 @@ buildCanonicalGraph(blueprintTree);
 
 ```
 Missing size for dimension "segment" on node "AudioProducer".
-Ensure the upstream artefact declares countInput or can derive this dimension from a loop.
+Ensure the upstream artifact declares countInput or can derive this dimension from a loop.
 ```
 
 #### 4. Instance Expansion
@@ -1485,7 +1511,7 @@ For a producer with this output schema:
 And artifact definition with arrays:
 
 ```yaml
-artifacts:
+outputs:
   - name: VideoScript
     type: json
     arrays:
@@ -1557,14 +1583,13 @@ inputs:
     height: 720
   Style: "Ghibli"
 
-  # System inputs - provide here, no blueprint declaration needed
+  # User-facing timing inputs for the top-level blueprint
   Duration: 30 # Total movie duration in seconds
   NumOfSegments: 3 # Number of segments to generate
-  # SegmentDuration is auto-computed as Duration/NumOfSegments (10 seconds)
-  # Override if needed: SegmentDuration: 15
+  # SegmentDuration is derived internally as Duration/NumOfSegments (10 seconds)
 ```
 
-**System Inputs:** `Duration` and `NumOfSegments` are system inputs - you provide their values in the input YAML but don't need to declare them in the blueprint. `SegmentDuration` is automatically computed as `Duration / NumOfSegments` unless you explicitly provide a value.
+**System Inputs:** Top-level blueprints should declare user-facing `Duration` and `NumOfSegments` inputs when the workflow depends on them. `SegmentDuration` is a derived internal value; do not expose it as a top-level blueprint input or ordinary input-template field. Prompt producers may still declare `SegmentDuration` when they consume it as context.
 
 ### Model Configuration
 
@@ -1699,8 +1724,8 @@ models:
 | Meta section required               | `Blueprint must have a meta section`             |
 | Meta.id required                    | `Blueprint meta must have an id`                 |
 | Meta.name required                  | `Blueprint meta must have a name`                |
-| At least one artifact               | `Blueprint must declare at least one artifact`   |
-| Composite blueprints need producers | `Composite blueprint must have producer imports` |
+| At least one output                 | `Blueprint must declare at least one output`     |
+| Composite blueprints need producers | `Composite blueprint must have blueprint imports` |
 
 ### Input Validation
 
@@ -1747,7 +1772,7 @@ models:
 
 | Rule               | Error Message                                                                                                                                           |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Dimension resolved | `Missing size for dimension "${label}" on node "${nodeId}". Ensure the upstream artefact declares countInput or can derive this dimension from a loop.` |
+| Dimension resolved | `Missing size for dimension "${label}" on node "${nodeId}". Ensure the upstream artifact declares countInput or can derive this dimension from a loop.` |
 | Consistent sizes   | `Dimension "${symbol}" has conflicting sizes (${existing} vs ${size})`                                                                                  |
 
 ---
@@ -1763,7 +1788,7 @@ loops:
   - name: segment
     countInput: NumOfSegments
 
-producers:
+imports:
   - name: ScriptProducer
     producer: prompt/script
   - name: AudioProducer
@@ -1792,7 +1817,7 @@ loops:
   - name: segment
     countInput: NumOfSegments
 
-producers:
+imports:
   - name: ScriptProducer
     producer: prompt/script
   - name: VideoPromptProducer
@@ -1824,7 +1849,7 @@ loops:
     countInput: NumOfSegments
     countInputOffset: 1 # N+1 images for N segments
 
-producers:
+imports:
   - name: ImageProducer
     producer: asset/text-to-image
     loop: image
@@ -1851,7 +1876,7 @@ connections:
 Complete workflow with timeline composition:
 
 ```yaml
-producers:
+imports:
   - name: ScriptProducer
     producer: prompt/script
   - name: VideoProducer
@@ -1920,7 +1945,7 @@ renku generate --last --inputs=<inputs.yaml> --pin="Producer:ScriptProducer" --f
 Surgical regeneration (canonical artifact ID format):
 
 ```bash
-renku generate --last --inputs=<inputs.yaml> --artifact-id="Artifact:AudioProducer.GeneratedAudio[0]"
+renku generate --last --inputs=<inputs.yaml> --regen="Artifact:AudioProducer.GeneratedAudio[0]"
 ```
 
 ### Inspect Execution Plan
@@ -1942,7 +1967,7 @@ Confirm:
 
 | Problem                                | Cause                                   | Solution                                      |
 | -------------------------------------- | --------------------------------------- | --------------------------------------------- |
-| TimelineProducer cannot resolve inputs | Missing `fanIn: true` on input          | Add `fanIn: true` to collection inputs        |
+| TimelineProducer cannot resolve inputs | Missing `fanIn: true` on input          | Add `fanIn: true` to array inputs        |
 | Fan-in descriptor is empty             | No inbound fan-in connection            | Add connection from source to fan-in input    |
 | Planner dimension error                | Mismatched dimensions in connection     | Verify dimensions match between source/target |
 | Blueprint validation error             | `countInputOffset` without `countInput` | Add `countInput` to loop/artifact             |
@@ -2036,7 +2061,7 @@ catalog/
 
 ```yaml
 # Works from any location - resolves from catalog
-producers:
+imports:
   - name: ScriptProducer
     producer: prompt/script # → catalog/producers/prompt/script/script.yaml
   - name: VideoProducer
@@ -2047,7 +2072,7 @@ producers:
 
 ```yaml
 # For custom producers not in the catalog
-producers:
+imports:
   - name: MyCustomProducer
     path: ./my-producers/custom.yaml # Relative to blueprint file
 ```

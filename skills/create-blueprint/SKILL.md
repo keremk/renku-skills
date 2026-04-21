@@ -12,9 +12,9 @@ Create Renku blueprints — YAML files that define video generation workflows by
 
 1. **Never modify catalog files.** Catalog is read-only reference. Always create new projects with `renku new:blueprint`.
 2. **Never run `renku generate` without `--dry-run`.** Full runs cost money and the user will be charged.
-3. **System inputs are NOT declared in `inputs:`.** `Duration`, `NumOfSegments`, `SegmentDuration`, `MovieId`, `StorageRoot`, `StorageBasePath` are automatic — but MUST be wired in `connections:` where needed.
+3. **Model timing inputs intentionally.** Top-level orchestration blueprints should declare required `Duration` and `NumOfSegments` in `inputs:` when the workflow depends on them. Do NOT expose derived/runtime values such as `SegmentDuration`, `MovieId`, `StorageRoot`, or `StorageBasePath` as top-level user inputs. Prompt producers may still declare `Duration` and `SegmentDuration` if they consume them, and media producers that output audio or video must declare a required `Duration` input.
 4. **Kebab-case project names, PascalCase IDs.** Project: `history-video`. Blueprint ID: `HistoryVideo`.
-5. **Use relative paths.** In producer imports use the `producer` keyword. For prompt producers use relative paths within the project folder.
+5. **Use relative paths.** In blueprint imports use the `producer` keyword. For prompt producers use relative paths within the project folder.
 6. **Minimal inputs.** Most producer inputs have sensible defaults. Only expose what the user needs to configure.
 7. **No legacy `collectors:` blocks.** Fan-in is connection-driven. See [Common Errors Guide](./references/common-errors-guide.md).
 8. **Quality over speed for the director prompt.** The director prompt producer is the highest-leverage file — it generates ALL downstream prompts. The director-prompt-engineer subagent has full guidance on this.
@@ -82,7 +82,7 @@ See [Requirement Examples](./references/requirement-examples.md) for detailed an
 
 Always include inputs for these even if the user doesn't mention them:
 - **Style/VisualStyle** — Visual aesthetic (cinematic, anime, photorealistic)
-- **Duration structure** — Duration, NumOfSegments (system inputs), NumOfImagesPerSegment (if applicable)
+- **Duration structure** — declare required `Duration` and `NumOfSegments` on the top-level blueprint when the workflow depends on them; add `NumOfImagesPerSegment` if applicable
 - **Audience** — Target demographic (when it affects tone/content)
 
 ### Step 3: Select Producers and Models
@@ -107,7 +107,7 @@ Key rules:
 
 The subagent creates the complete prompt producer files (TOML, JSON schema, YAML).
 
-**Prompt producer `producer.yaml` valid structure:** Only these top-level sections are valid: `meta`, `inputs`, `artifacts`, `loops`. The `promptFile` and `outputSchema` references belong inside `meta:`, not as top-level sections. There is NO top-level `type:`, `prompts:`, or `output:` section. If the director-prompt-engineer subagent generates these, remove them immediately.
+**Prompt producer `producer.yaml` valid structure:** Only these top-level sections are valid: `meta`, `inputs`, `outputs`, and optionally `loops`. The `promptFile` and `outputSchema` references belong inside `meta:`, not as top-level sections. There is NO top-level `type:`, `prompts:`, or `output:` section. If the director-prompt-engineer subagent generates these, remove them immediately.
 
 ```yaml
 meta:
@@ -134,14 +134,16 @@ The director MUST:
 - [ ] Include concrete prompt examples in the system prompt
 - [ ] Test timing math: count words in example narrations
 
-### Step 5: Determine Inputs and Artifacts
+### Step 5: Determine Inputs and Outputs
 
 Based on the selected producers and director output schema, define:
 - **inputs:** — User-configurable parameters (PascalCase names, minimal set)
-- **artifacts:** — Blueprint outputs (arrays with countInput for looped outputs)
+- **outputs:** — Blueprint output connectors (arrays with countInput for looped outputs)
 - **loops:** — Iteration dimensions (segment, image, clip, etc.)
 
-Remember: system inputs (`Duration`, `NumOfSegments`, `SegmentDuration`) are automatic — don't declare them in `inputs:`.
+Use `imports:` for child blueprint references. Runtime build products are still `Artifact:...` values in manifests and event logs, but authored YAML should not use `artifacts:` anymore.
+
+Remember: top-level blueprints should declare required `Duration` and `NumOfSegments` when users provide them. `SegmentDuration` is derived and should not be exposed as a top-level user input, though prompt producers may declare it if they consume it.
 
 **User-provided image arrays:**
 When the user will supply multiple images of the same kind (e.g., 2–3 style reference images, a set of character photos), use an array input — not individual named inputs:
@@ -239,6 +241,16 @@ Fix any errors before proceeding. See [Common Errors Guide](./references/common-
 | P053 | Remove `collectors:` — use connection-driven fan-in |
 | R041 | Cross-dimension collection conflict — use whole-collection broadcast (`from: Array to: Producer[loop].Input`) instead of secondary loop indexing |
 
+**W001 — Unused input warnings:** After fixing errors, review any W001 warnings. For each flagged input:
+1. Check whether it should have been wired into a connection, loop `countInput`, or artifact `countInput` — and add the missing wiring if so.
+2. If there is no legitimate use for it, remove the input declaration from both the blueprint and `input-template.yaml`.
+3. Only keep an unused input if you have a specific reason (e.g., it's a placeholder for a planned connection) — and leave a comment explaining why.
+
+Common W001 causes to watch for:
+- Implicit requirements from Step 2 (`Style`, `Audience`) declared but never wired to the director or any producer
+- Count inputs (`NumOfStyleImages`) declared for an array but not referenced in any `loops[]` or `artifacts[]` `countInput`
+- Inputs collected during requirements gathering that were later superseded by director outputs
+
 ### Step 9: Test with Dry Run
 
 **Verify model names match the catalog exactly before writing the input template.** Model names use `/` separators and include full version + variant suffixes. Look them up directly:
@@ -290,7 +302,7 @@ inputs:
     type: <string|int|image|audio|video|json>
     required: <true|false>
 
-artifacts:
+outputs:
   - name: <PascalCase>
     type: <string|array|image|audio|video|json>
     itemType: <for arrays>
@@ -301,7 +313,7 @@ loops:
     countInput: <input providing count>
     parent: <optional parent loop>
 
-producers:
+imports:
   - name: <PascalCase alias>
     producer: <type/name>            # catalog producer (e.g., image/text-to-image)
     path: <relative path>            # OR local prompt producer (e.g., ./my-director/producer.yaml)

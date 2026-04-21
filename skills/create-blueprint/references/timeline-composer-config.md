@@ -6,10 +6,10 @@ The Timeline Composer assembles media tracks (video, audio, images, music, text)
 
 ## Declaring the Timeline Composer
 
-In the blueprint `producers:` section:
+In the blueprint `imports:` section:
 
 ```yaml
-producers:
+imports:
   - name: TimelineComposer
     producer: composition/timeline-composer
 ```
@@ -207,7 +207,7 @@ To add karaoke-style subtitles to a video workflow:
 1. **Add "Transcription" to `tracks`** in the TimelineComposer config.
 2. **Add `transcriptionClip`** pointing to the `TranscriptionAudio` fan-in input.
 3. **Wire audio into `TranscriptionAudio`** -- connect the same (or appropriate) audio artifacts that carry speech.
-4. **Add TranscriptionProducer and VideoExporter** to the blueprint producers.
+4. **Add TranscriptionProducer and VideoExporter** to the blueprint imports.
 5. **Wire the chain**: `TimelineComposer.Timeline -> TranscriptionProducer.Timeline`, `TranscriptionProducer.Transcription -> VideoExporter.Transcription`.
 
 ```yaml

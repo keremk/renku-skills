@@ -75,7 +75,7 @@ inputs:
     description: ISO 639-3 language code for transcription (e.g., eng, spa, fra).
     type: string
 
-artifacts:
+outputs:
   - name: Transcription
     description: Word-level transcription aligned to video timeline.
     type: json
@@ -154,7 +154,7 @@ inputs:
     type: json
     required: false
 
-artifacts:
+outputs:
   - name: FinalVideo
     description: Final rendered MP4 video.
     type: video
@@ -171,7 +171,7 @@ artifacts:
 #### 1. Add the Producer
 
 ```yaml
-producers:
+imports:
   # ... existing producers ...
   - name: TranscriptionProducer
     producer: asset/transcription
@@ -369,7 +369,7 @@ inputs:
     type: string
     required: true
 
-artifacts:
+outputs:
   - name: FinalVideo
     description: Final rendered MP4 with karaoke subtitles.
     type: video
@@ -378,7 +378,7 @@ loops:
   - name: segment
     countInput: NumOfSegments
 
-producers:
+imports:
   - name: ScriptProducer
     producer: prompt/script
   - name: VideoProducer
