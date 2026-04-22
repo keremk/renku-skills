@@ -1,8 +1,8 @@
 # Renku Skills
 
-This repository is a standalone skills/plugin package for working with the Renku CLI.
+This repository is a standalone skills/plugin package for working with the Renku CLI and Renku video-generation workflows.
 
-It was split out from the main Renku codebase so teams can install and share just the skills layer without distributing the full repository.
+It was split out from the main Renku codebase so teams can install and share the Renku blueprint and video-workflow layer without distributing the full repository.
 
 Important: these skills assume you already have the Renku CLI installed and configured. Without the CLI, they are not useful.
 
@@ -27,6 +27,11 @@ renku init --root=~/renku-workspace
 
 ```text
 .
+├── .agents/
+│   └── plugins/
+│       └── marketplace.json
+├── .codex-plugin/
+│   └── plugin.json
 ├── .claude-plugin/
 │   ├── plugin.json
 │   └── marketplace.json
@@ -43,6 +48,8 @@ renku init --root=~/renku-workspace
 - `agents/` contains Claude Code subagents used by the skills
 - `.claude-plugin/plugin.json` is the Claude Code plugin manifest
 - `.claude-plugin/marketplace.json` lets you install this plugin through Claude's marketplace flow (local or Git-hosted)
+- `.codex-plugin/plugin.json` is the Codex plugin manifest
+- `.agents/plugins/marketplace.json` is the repo-scoped Codex marketplace entry that points back to this repo root
 
 ## Quick start
 
@@ -99,9 +106,28 @@ Claude Code desktop uses the same plugin system as CLI.
 
 ## Install in Codex CLI
 
-Codex loads skills from `~/.agents/skills` (user scope) and from `.agents/skills` in repositories.
+This repo now supports two Codex installation styles.
 
-Recommended (from this repo root):
+### Option A: Install as a Codex plugin
+
+From the Codex docs, the current plugin flow starts by adding a marketplace source. Because this repo now includes a repo marketplace at `.agents/plugins/marketplace.json`, you can add the repo itself as a marketplace root:
+
+```bash
+codex plugin marketplace add /absolute/path/to/this/repo
+```
+
+Then restart Codex, open the plugin directory, choose the marketplace, and install `renku-plugin`. The plugin will expose the existing shared `skills/` tree from this repo.
+
+This uses:
+
+- `.codex-plugin/plugin.json` as the Codex plugin manifest
+- `.agents/plugins/marketplace.json` as the Codex marketplace catalog
+
+### Option B: Load the skills directly
+
+Codex also loads skills from `~/.agents/skills` (user scope) and from `.agents/skills` in repositories. If you only want the skills, without using the plugin marketplace flow, you can still symlink them directly.
+
+Recommended from this repo root:
 
 ```bash
 ./scripts/install-codex-skills.sh
@@ -134,15 +160,29 @@ $create-blueprint
 
 ## Install in Codex app
 
-Codex app uses the same skill locations as Codex CLI.
+Codex app uses the same plugin and skill locations as Codex CLI.
 
-1. Install skills to `~/.agents/skills` (use `./scripts/install-codex-skills.sh`).
-2. Open/restart Codex app.
+### Option A: As a plugin
+
+1. Add this repo as a marketplace root:
+
+```bash
+codex plugin marketplace add /absolute/path/to/this/repo
+```
+
+2. Restart Codex app.
+3. Open the plugin directory and select the marketplace from this repo.
+4. Install `renku-plugin`.
+
+### Option B: As direct skills
+
+1. Install skills to `~/.agents/skills` with `./scripts/install-codex-skills.sh`.
+2. Open or restart Codex app.
 3. Open **Skills** in the sidebar to confirm they loaded.
-4. Invoke with `$<skill-name>` (for example, `$create-blueprint`).
+4. Invoke with `$<skill-name>` such as `$create-blueprint`.
 
 ## Notes on compatibility
 
 - Claude Code uses this repo as a plugin (`.claude-plugin`, `agents/`, `skills/`).
-- Codex consumes the `skills/*` directories via `.agents/skills` or `~/.agents/skills`.
+- Codex can now use this repo as a plugin (`.codex-plugin`, `.agents/plugins/marketplace.json`) or consume the `skills/*` directories directly via `.agents/skills` or `~/.agents/skills`.
 - The same skill content is shared across both tools.

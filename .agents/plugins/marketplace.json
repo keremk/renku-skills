@@ -1,0 +1,20 @@
+{
+  "name": "renku-codex-marketplace",
+  "interface": {
+    "displayName": "Renku Codex Plugins"
+  },
+  "plugins": [
+    {
+      "name": "renku-plugin",
+      "source": {
+        "source": "local",
+        "path": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Video / Media"
+    }
+  ]
+}
