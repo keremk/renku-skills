@@ -115,6 +115,60 @@ Do not expose derived/runtime values as user inputs:
 
 These may still be referenced in `connections:` when the system provides them.
 
+### `string` vs `text`
+
+Choose input types for the viewer editing experience, not only for validation.
+
+Use `string` for short scalar values that fit naturally in a single-line control:
+
+- language codes,
+- compact labels,
+- enum-like values,
+- short names,
+- provider/model-adjacent IDs when they truly must be user-facing.
+
+Use `text` for anything the user is likely to write or edit as multiple words, sentences, or paragraphs:
+
+- prompts,
+- inquiry/topic briefs,
+- style or visual direction descriptions,
+- audience/tone guidance when more than a label,
+- character/product descriptions,
+- narration or dialogue text,
+- creative concepts,
+- instructions to a director prompt producer.
+
+The viewer uses `text` to provide a larger text editor. If a field will be edited visually or creatively, prefer `text` over `string`.
+
+Examples:
+
+```yaml
+inputs:
+  - name: InquiryPrompt
+    description: The topic, question, or creative brief for the video.
+    type: text
+    required: true
+  - name: Style
+    description: Multi-sentence visual direction and aesthetic constraints.
+    type: text
+    required: true
+  - name: LanguageCode
+    description: ISO language code for generated speech.
+    type: string
+    required: false
+```
+
+For arrays of prompt-like values, use `itemType: text`:
+
+```yaml
+inputs:
+  - name: ScenePrompts
+    type: array
+    itemType: text
+    countInput: NumOfSegments
+    required: true
+```
+
 ## Outputs
 
 Declare every artifact the user, viewer, or downstream tool needs:

@@ -41,7 +41,7 @@ meta:
 
 inputs:
   - name: InquiryPrompt
-    type: string
+    type: text
     required: true
   - name: Duration
     type: int
@@ -50,7 +50,7 @@ inputs:
     type: int
     required: true
   - name: Style
-    type: string
+    type: text
     required: true
 
 outputs:
@@ -59,6 +59,21 @@ outputs:
 ```
 
 Do not use old top-level `type`, `artifacts`, `prompts`, or `output` sections.
+
+## Input Type Choice
+
+Use `text` for director inputs that users or agents will write as rich creative instructions:
+
+- inquiry prompts,
+- style descriptions,
+- audience/tone briefs,
+- character/product descriptions,
+- scene concepts,
+- narration or dialogue drafts.
+
+Use `string` only for short scalar values such as compact labels, language codes, and enum-like controls.
+
+This matters in the viewer: `text` fields open a larger text editor, while `string` fields are better for short single-line values.
 
 ## Valid `prompts.toml`
 
