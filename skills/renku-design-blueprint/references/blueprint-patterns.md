@@ -8,6 +8,31 @@
 
 Do not add later endpoints speculatively. The endpoint changes producer needs, costs, validation scope, and user expectations.
 
+## Published outputs are endpoints
+
+Producer outputs are internal graph values. Top-level blueprint outputs are publication endpoints.
+
+Good:
+
+```yaml
+- from: SegmentPlainImageProducer[segment][image].GeneratedImage
+  to: SegmentStillImages[segment][image]
+
+- from: SegmentPlainImageProducer[segment][0].GeneratedImage
+  to: SeedanceStartEndClipProducer[segment].StartImage
+```
+
+The first edge publishes an artifact. The second edge feeds an internal producer directly from the real source.
+
+Bad:
+
+```yaml
+- from: SegmentStillImages[segment][0]
+  to: SeedanceStartEndClipProducer[segment].StartImage
+```
+
+Do not route from a published output back into the graph. It hides the real dependency and makes conditions ambiguous.
+
 ## Reusable blueprint shape
 
 - Inputs: user-facing controls only.

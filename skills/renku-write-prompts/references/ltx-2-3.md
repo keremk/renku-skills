@@ -80,6 +80,17 @@ The official material says:
 - the audio anchors the temporal structure
 - the prompt should describe the visual interpretation of the soundtrack
 
+For Renku talking-head workflows using `video/talking-head` with `ltx-2.3/audio-to-video`:
+
+- the exposed inputs are `Prompt`, `CharacterImage`, and `AudioUrl`
+- use one clean portrait or interview-frame image as `CharacterImage`
+- do not use production character sheets, multi-view sheets, expression panels, contact sheets, or collage layouts as the LTX anchor image
+- let the audio drive lip timing and delivery; the prompt should describe visual performance, not restate the spoken text
+- describe subtle human motion: eye contact, blinking, small head movement, breathing, hand gesture if visible, and calm documentary delivery
+- preserve the image identity and interview setting; avoid asking the model to redesign the face, outfit, or environment
+- keep camera movement restrained for talking heads, such as locked-off tripod, gentle push-in, or slight handheld presence
+- fal's `ltx-2.3/audio-to-video` schema accepts audio from 2 to 20 seconds, so segment speech should stay inside that practical range before generation
+
 ### D. Longer clips
 
 The 20-second guide adds:
@@ -168,6 +179,12 @@ Fix:
 Using the input image as the starting point, [describe what begins to move and how it evolves]. The camera [movement]. [Audio or ambience]. Do not rewrite static scene details already visible in the source image.
 ```
 
+### Talking-head audio-to-video prompt
+
+```text
+Using the input portrait as the locked interview frame, the expert speaks with [delivery energy] while maintaining natural eye contact. Their face animates subtly with accurate lip sync to the supplied audio, small blinks, slight head movement, and restrained documentary gestures. The camera [locked-off or gentle movement], and the interview room keeps the same lighting, background, and mood visible in the source image.
+```
+
 ### Longer-clip prompt
 
 ```text
@@ -185,6 +202,7 @@ Before writing an LTX-2.3 prompt, the skill should gather:
 - camera movement
 - audio or dialogue
 - segment duration
+- for talking heads: whether a single portrait/interview-frame image is available as `CharacterImage`
 
 ## 10. Sources and provenance
 
@@ -193,6 +211,8 @@ Primary:
 - [LTX-2.3 prompt guide](https://ltx.io/model/model-blog/ltx-2-3-prompt-guide)
 - [How to generate 20-second AI videos with LTX-2.3](https://ltx.io/model/model-blog/how-to-generate-20-second-ai-videos)
 - [LTX-2.3 model page](https://ltx.io/model/ltx-2-3)
+- [LTX audio-to-video API reference](https://docs.ltx.video/api-documentation/api-reference/video-generation/audio-to-video)
+- [fal LTX-2.3 audio-to-video schema](https://fal.ai/models/fal-ai/ltx-2.3/audio-to-video/api)
 
 Notes on confidence:
 

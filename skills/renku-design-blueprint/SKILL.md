@@ -19,6 +19,7 @@ Design reusable Renku blueprints that are safe to validate, dry-run, and iterate
 ## Non-Negotiables
 
 - Treat asset-only blueprints as first-class. Do not add timeline composers or exporters unless the user explicitly wants composition or final render.
+- Treat producer outputs as internal graph values and top-level blueprint outputs as publication endpoints. Never route from a published output back into an internal producer.
 - Author YAML against declared producer contracts. Never infer bindings from names or canonical IDs.
 - Keep top-level inputs user-facing. Do not expose derived runtime values such as `SegmentDuration`, `MovieId`, `StorageRoot`, or `StorageBasePath` as user inputs.
 - All video and audio producers must have an explicit `Duration` input declared by the producer and wired by the blueprint.
@@ -38,6 +39,8 @@ Design reusable Renku blueprints that are safe to validate, dry-run, and iterate
 - Read `references/blueprint-authoring-reference.md` when implementing actual blueprint YAML.
 - Read `references/requirements-to-graph-reference.md` when turning user requirements into a graph shape.
 - Read `references/blueprint-patterns.md` for graph patterns and endpoints.
+- Read `references/asset-only-blueprint-patterns.md` when the blueprint publishes reusable assets instead of a final render.
+- Read `references/reference-bundle-patterns.md` when creating portraits, character sheets, style references, or other reusable visual anchors.
 - Read `references/timeline-and-transcription-reference.md` when adding timeline composition, export, subtitles, or karaoke.
 - Read `references/condition-heavy-design.md` before adding optional or conditional branches.
 - Read `references/input-output-contracts.md` when defining inputs, outputs, loops, and prompt producer schemas.

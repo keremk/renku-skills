@@ -36,6 +36,7 @@ Include any required model config explicitly. Do not invent defaults to keep goi
 ## References
 
 - Read `references/producer-workflow-reference.md` when selecting concrete workflow shapes and producer contracts.
+- Read `references/model-family-execution-patterns.md` when deciding whether a model family changes graph topology rather than only prompt text.
 - Read `references/workflow-decision-tree.md` for producer/workflow selection.
 - Read `references/model-contract-checklist.md` before committing a model choice.
 - Read `references/seedance-workflows.md` for Seedance-specific workflow implications.

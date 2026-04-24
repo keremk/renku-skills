@@ -12,10 +12,11 @@ Validate before claiming a blueprint or build is ready. Dry-run evidence is part
 For blueprint changes:
 
 1. Run blueprint validation through the same surface the user will use.
-2. Run a dry-run with realistic inputs.
-3. Inspect dry-run validation coverage and produced condition paths when conditions are involved.
-4. Run stage-by-stage checks when the user will use `--up` or `--up-to-layer`.
-5. If source code changed, run the repository-required build and tests.
+2. Run `generate --preflight-only` with realistic inputs to validate the executable plan without simulation.
+3. Run a dry-run with realistic inputs.
+4. Inspect dry-run validation coverage and produced condition paths when conditions are involved.
+5. Run stage-by-stage checks when the user will use `--up` or `--up-to-layer`.
+6. If source code changed, run the repository-required build and tests.
 
 For one-time video inputs:
 
@@ -28,6 +29,7 @@ For one-time video inputs:
 
 - Exact command names, not vague statements.
 - Whether validation had warnings.
+- Whether preflight passed and which layer scope it checked.
 - Dry-run job/layer summary.
 - Condition coverage summary for branch-heavy graphs.
 - Any residual risks or warnings.
@@ -36,6 +38,7 @@ For one-time video inputs:
 
 - Read `references/validation-runbook.md` before deciding a blueprint/build/source change is complete.
 - Read `references/blueprint-warning-and-error-gotchas.md` when validation reports warnings or graph/runtime errors.
+- Read `references/common-errors-advanced-blueprints.md` for condition-heavy and model-specific failure patterns.
 - Read `references/validation-checklist.md` for command sequence.
 - Read `references/dry-run-feedback.md` for interpreting produced condition paths.
 - Read `references/error-codes.md` for Renku error-code handling expectations.

@@ -9,7 +9,7 @@ Help the user create or edit a specific video/build using Renku, the agent, and 
 
 ## Operating Modes
 
-- New build: inspect the chosen blueprint, create/populate inputs, validate, dry-run, then run only with explicit approval.
+- New build: inspect the chosen blueprint, create/populate inputs, validate, preflight, dry-run, then run only with explicit approval.
 - Existing build: read current inputs and build state, preserve what is working, and make targeted changes.
 - Visual iteration: use the viewer to inspect artifacts, pin good outputs, regenerate weak outputs, and continue stage by stage.
 
@@ -20,7 +20,7 @@ Help the user create or edit a specific video/build using Renku, the agent, and 
 3. Use `renku-pick-workflow` when model or workflow selection is open.
 4. Use `renku-write-prompts` before writing prompt-bearing inputs.
 5. Populate or edit `inputs.yaml` without changing fields unrelated to the requested edit.
-6. Use `renku-validate-run` for validation, dry-run, costs-only, and stage checks.
+6. Use `renku-validate-run` for validation, preflight, dry-run, costs-only, and stage checks.
 7. For real generation, proceed stage by stage when useful: generate early planning/reference assets, inspect in viewer, pin/regen, then continue.
 
 ## Viewer-Aware Rules

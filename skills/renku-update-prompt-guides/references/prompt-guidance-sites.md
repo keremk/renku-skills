@@ -2,7 +2,7 @@
 
 This file is the source map and guide index for the per-model prompt references used by `renku-write-prompts`.
 
-Last refreshed: 2026-04-09
+Last refreshed: 2026-04-24
 
 ## How to use this file
 
@@ -52,7 +52,7 @@ Last refreshed: 2026-04-09
 | Veo 3.1 | Google | [Ultimate prompting guide for Veo 3.1](https://cloud.google.com/blog/products/ai-machine-learning/ultimate-prompting-guide-for-veo-3-1)<br>[Veo on Vertex AI docs](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/models/veo/3-1-generate-preview) | [LTX Studio: Veo prompt guide](https://ltx.studio/blog/veo-prompt-guide) | The Google guide is the main source. It is unusually strong because it covers shot design, camera language, audio prompting, and structured prompt formulas. |
 | Grok Imagine Video | xAI | [xAI video generation docs](https://docs.x.ai/developers/model-capabilities/video/generation)<br>[Grok Imagine Video model docs](https://docs.x.ai/developers/models/grok-imagine-video) | [How to prompt Grok Imagine](https://www.genaintel.com/guides/how-to-prompt-grok-imagine) | Same pattern as the image model: official docs explain features and request structure, but not yet a rich official prompt guide. |
 | Kling VIDEO 3.0 | Kling AI / Kuaishou | [Kling VIDEO 3.0 model user guide](https://app.klingai.com/cn/quickstart/klingai-video-3-model-user-guide) | [fal: Kling 3.0 prompting guide](https://blog.fal.ai/kling-3-0-prompting-guide/)<br>[Kling style emulation guide](https://kling.ai/blog/kling-ai-video-style-emulation-guide) | Official guide is strong on feature behavior, multi-shot, subject binding, and voice control. fal adds more direct prompt-writing advice. |
-| LTX-2.3 | Lightricks / LTX Studio | [LTX-2.3 prompt guide](https://ltx.io/model/model-blog/ltx-2-3-prompt-guide)<br>[How to generate 20-second AI videos with LTX-2.3](https://ltx.io/model/model-blog/how-to-generate-20-second-ai-videos) | [LTX-2.3 model page](https://ltx.io/model/ltx-2-3) | Official LTX material is strong and practical, especially on camera movement, subject action, prompt specificity, and duration-aware prompting. |
+| LTX-2.3 | Lightricks / LTX Studio | [LTX-2.3 prompt guide](https://ltx.io/model/model-blog/ltx-2-3-prompt-guide)<br>[How to generate 20-second AI videos with LTX-2.3](https://ltx.io/model/model-blog/how-to-generate-20-second-ai-videos)<br>[LTX audio-to-video API reference](https://docs.ltx.video/api-documentation/api-reference/video-generation/audio-to-video) | [LTX-2.3 model page](https://ltx.io/model/ltx-2-3)<br>[fal LTX-2.3 audio-to-video schema](https://fal.ai/models/fal-ai/ltx-2.3/audio-to-video/api) | Official LTX material is strong and practical, especially on camera movement, subject action, prompt specificity, and duration-aware prompting. The audio-to-video docs/schema ground talking-head guidance in the exposed audio plus single-image workflow. |
 | Wan 2.7 | Alibaba | [Alibaba Cloud text-to-video / image-to-video prompt guide](https://www.alibabacloud.com/help/en/model-studio/text-to-video-prompt)<br>[Wan general video editing guide](https://www.alibabacloud.com/help/en/model-studio/wan-vace-guide) | [Wan 2.7 prompt guide](https://wan27ai.com/prompt-guide)<br>[WaveSpeed model page](https://wavespeed.ai/models/alibaba/wan-2.7/video-edit) | Alibaba has a real official prompt guide, which is more important than the third-party sites. The official docs are especially useful because they break prompting into formulas for T2V, I2V, sound, reference video, and multi-shot work. |
 
 ## Gaps and caveats

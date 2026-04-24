@@ -63,12 +63,12 @@ The skills are intentionally split by task so agents load the right guidance at 
 | Skill | Use it for |
 | --- | --- |
 | `renku-design-blueprint` | Designing reusable Renku blueprints, asset pipelines, compositing workflows, and full video workflows. |
-| `renku-audit-conditions` | Auditing condition-heavy graphs, optional branches, reference-vs-plain paths, StartEnd anchor safety, sparse fan-in, and unused active producers. |
+| `renku-audit-conditions` | Auditing condition-heavy graphs, optional branches, reference-vs-plain paths, StartEnd anchor safety, required-input coherence, sparse fan-in, and unused active producers. |
 | `renku-pick-workflow` | Choosing workflow mode, producer contracts, providers, and exact model configurations. |
 | `renku-write-prompts` | Writing model-specific prompts for active Renku workflows such as Seedance, Kling, Veo, image editing, reference video, multi-shot, and native-audio video. |
 | `renku-author-director` | Creating or repairing director prompt producers: `producer.yaml`, `prompts.toml`, and `output-schema.json`. |
 | `renku-create-video` | Creating or iterating one-time videos/builds with the agent and viewer: populate inputs, inspect artifacts, pin good outputs, and regenerate weak ones. |
-| `renku-validate-run` | Running validation, dry-runs, produced condition path checks, stage-by-stage checks, costs-only, and final verification. |
+| `renku-validate-run` | Running validation, preflight, dry-runs, produced condition path checks, stage-by-stage checks, costs-only, and final verification. |
 | `renku-update-prompt-guides` | Maintaining the model prompt guide library as new models and vendor docs arrive. |
 
 Typical flow for reusable blueprint work:
@@ -89,6 +89,13 @@ renku-create-video
 → renku-write-prompts for prompt-bearing inputs
 → renku-validate-run before dry-run or generation
 ```
+
+Core safety concepts the skills should preserve:
+
+- Producer outputs are internal graph values.
+- Top-level blueprint outputs are publication endpoints, not internal sources.
+- Preflight checks the executable plan with real inputs before dry-run simulation.
+- Stage-limited runs should not fail because later unscheduled layers are absent.
 
 ## Quick start
 
