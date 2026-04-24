@@ -1,0 +1,4 @@
+interface:
+  display_name: "Renku Update Prompt Guides"
+  short_description: "Maintain model prompt guide references"
+  default_prompt: "Use $renku-update-prompt-guides to add or refresh a Renku model prompt guide with current sources and producer-contract notes."

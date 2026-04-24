@@ -1,0 +1,4 @@
+interface:
+  display_name: "Renku Write Prompts"
+  short_description: "Write model-specific generation prompts"
+  default_prompt: "Use $renku-write-prompts to write prompts for a selected Renku model workflow such as Seedance, Kling, Veo, or image editing."

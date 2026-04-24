@@ -1,0 +1,4 @@
+interface:
+  display_name: "Renku Audit Conditions"
+  short_description: "Catch unsafe conditional graph branches"
+  default_prompt: "Use $renku-audit-conditions to review a condition-heavy Renku blueprint for skipped producers, unused branches, and dry-run coverage."

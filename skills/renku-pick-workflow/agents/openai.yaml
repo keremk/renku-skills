@@ -1,0 +1,4 @@
+interface:
+  display_name: "Renku Pick Workflow"
+  short_description: "Choose producers, workflows, and models"
+  default_prompt: "Use $renku-pick-workflow to choose the right Renku producers, workflow mode, provider, and model configuration."

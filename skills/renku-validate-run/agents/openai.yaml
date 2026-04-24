@@ -1,0 +1,4 @@
+interface:
+  display_name: "Renku Validate Run"
+  short_description: "Validate and dry-run before completion"
+  default_prompt: "Use $renku-validate-run to validate a Renku blueprint or build, run dry-runs, inspect condition paths, and report verification evidence."

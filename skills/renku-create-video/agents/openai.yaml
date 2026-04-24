@@ -1,0 +1,4 @@
+interface:
+  display_name: "Renku Create Video"
+  short_description: "Iterate one-time videos with the viewer"
+  default_prompt: "Use $renku-create-video to populate inputs, steer prompts, inspect viewer artifacts, pin good outputs, and regenerate weak ones."

@@ -39,17 +39,56 @@ renku init --root=~/renku-workspace
 │   ├── director-prompt-engineer.md
 │   └── model-picker.md
 └── skills/
-    ├── create-blueprint/
-    ├── director-prompt-engineer/
-    └── model-picker/
+    ├── renku-audit-conditions/
+    ├── renku-author-director/
+    ├── renku-create-video/
+    ├── renku-design-blueprint/
+    ├── renku-pick-workflow/
+    ├── renku-update-prompt-guides/
+    ├── renku-validate-run/
+    └── renku-write-prompts/
 ```
 
 - `skills/` contains the reusable skill definitions (`SKILL.md` + references)
-- `agents/` contains Claude Code subagents used by the skills
+- `agents/` contains legacy Claude Code subagents; the primary Renku guidance now lives in the `skills/renku-*` folders
 - `.claude-plugin/plugin.json` is the Claude Code plugin manifest
 - `.claude-plugin/marketplace.json` lets you install this plugin through Claude's marketplace flow (local or Git-hosted)
 - `.codex-plugin/plugin.json` is the Codex plugin manifest
 - `.agents/plugins/marketplace.json` is the repo-scoped Codex marketplace entry that points back to this repo root
+
+## Skill map
+
+The skills are intentionally split by task so agents load the right guidance at the right time:
+
+| Skill | Use it for |
+| --- | --- |
+| `renku-design-blueprint` | Designing reusable Renku blueprints, asset pipelines, compositing workflows, and full video workflows. |
+| `renku-audit-conditions` | Auditing condition-heavy graphs, optional branches, reference-vs-plain paths, StartEnd anchor safety, sparse fan-in, and unused active producers. |
+| `renku-pick-workflow` | Choosing workflow mode, producer contracts, providers, and exact model configurations. |
+| `renku-write-prompts` | Writing model-specific prompts for active Renku workflows such as Seedance, Kling, Veo, image editing, reference video, multi-shot, and native-audio video. |
+| `renku-author-director` | Creating or repairing director prompt producers: `producer.yaml`, `prompts.toml`, and `output-schema.json`. |
+| `renku-create-video` | Creating or iterating one-time videos/builds with the agent and viewer: populate inputs, inspect artifacts, pin good outputs, and regenerate weak ones. |
+| `renku-validate-run` | Running validation, dry-runs, produced condition path checks, stage-by-stage checks, costs-only, and final verification. |
+| `renku-update-prompt-guides` | Maintaining the model prompt guide library as new models and vendor docs arrive. |
+
+Typical flow for reusable blueprint work:
+
+```text
+renku-design-blueprint
+→ renku-pick-workflow
+→ renku-author-director and/or renku-write-prompts
+→ renku-audit-conditions
+→ renku-validate-run
+```
+
+Typical flow for a one-time video session:
+
+```text
+renku-create-video
+→ renku-pick-workflow if models/workflows are open
+→ renku-write-prompts for prompt-bearing inputs
+→ renku-validate-run before dry-run or generation
+```
 
 ## Quick start
 
@@ -85,7 +124,9 @@ Then reload plugins:
 Use skills with namespaced commands such as:
 
 ```text
-/renku-plugin:create-blueprint
+/renku-plugin:renku-design-blueprint
+/renku-plugin:renku-create-video
+/renku-plugin:renku-validate-run
 ```
 
 ## Install in Claude Code desktop app
@@ -155,7 +196,9 @@ Then start Codex and verify skills are visible:
 Invoke directly with skill syntax, for example:
 
 ```text
-$create-blueprint
+$renku-design-blueprint
+$renku-create-video
+$renku-validate-run
 ```
 
 ## Install in Codex app
@@ -179,7 +222,7 @@ codex plugin marketplace add /absolute/path/to/this/repo
 1. Install skills to `~/.agents/skills` with `./scripts/install-codex-skills.sh`.
 2. Open or restart Codex app.
 3. Open **Skills** in the sidebar to confirm they loaded.
-4. Invoke with `$<skill-name>` such as `$create-blueprint`.
+4. Invoke with `$<skill-name>` such as `$renku-design-blueprint`.
 
 ## Notes on compatibility
 

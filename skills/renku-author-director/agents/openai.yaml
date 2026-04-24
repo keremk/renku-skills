@@ -1,0 +1,4 @@
+interface:
+  display_name: "Renku Author Director"
+  short_description: "Build structured director prompt producers"
+  default_prompt: "Use $renku-author-director to create or repair a Renku prompt producer with producer.yaml, prompts.toml, and output-schema.json."

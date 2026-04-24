@@ -1,0 +1,4 @@
+interface:
+  display_name: "Renku Design Blueprint"
+  short_description: "Design reusable Renku workflow graphs"
+  default_prompt: "Use $renku-design-blueprint to design a reusable Renku blueprint for an asset pipeline or video workflow."

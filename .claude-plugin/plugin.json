@@ -1,6 +1,6 @@
 {
   "name": "renku-plugin",
-  "description": "Claude Code plugin with Renku skills and subagents for blueprint creation and model selection.",
+  "description": "Claude Code plugin with 8 Renku skills covering the full video generation workflow: blueprint design, workflow selection, prompt writing, director authoring, condition auditing, run validation, video creation, and prompt guide maintenance.",
   "version": "1.0.1",
   "author": {
     "name": "Kerem Karatal"
