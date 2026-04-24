@@ -279,6 +279,7 @@ Current guide mapping:
 - Grok Imagine Image -> [grok-imagine-image.md](./references/grok-imagine-image.md)
 - Qwen-Image-2512 -> [qwen-image-2512.md](./references/qwen-image-2512.md)
 - Seedance 1.5 Pro -> [seedance-1-5.md](./references/seedance-1-5.md)
+- Seedance 2.0 -> [seedance-2-0.md](./references/seedance-2-0.md)
 - Veo 3.1 -> [veo-3-1.md](./references/veo-3-1.md)
 - Grok Imagine Video -> [grok-imagine-video.md](./references/grok-imagine-video.md)
 - Kling VIDEO 3.0 -> [kling-3.md](./references/kling-3.md)

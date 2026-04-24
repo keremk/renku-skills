@@ -1,12 +1,12 @@
 ---
 name: create-blueprint
-description: Create Renku blueprints for video generation workflows. Use when users say "create a video", "build a video pipeline", "make a documentary", "generate a video workflow", "design a blueprint", "create an ad video", "educational video", "talking head video", or want to define custom video generation pipelines composing prompt producers, asset producers, and timeline composers.
+description: Create Renku blueprints for asset pipelines, compositing workflows, and full video generation workflows. Use when users say "create a video", "build a pipeline", "make a documentary", "generate a workflow", "design a blueprint", "create an ad video", "educational video", "talking head video", or want to define custom workflows composing prompt producers, asset producers, optional timeline composers, and optional exporters.
 allowed-tools: Read, Grep, Glob, Bash, Write, Edit, AskUserQuestion
 ---
 
 # Blueprint Creation Skill
 
-Create Renku blueprints — YAML files that define video generation workflows by composing prompt producers, asset producers, and timeline composers into a dependency graph.
+Create Renku blueprints — YAML files that define asset pipelines, compositing workflows, or full video generation workflows by composing prompt producers, asset producers, optional timeline composers, and optional exporters into a dependency graph.
 
 ## Critical Rules
 
@@ -22,6 +22,7 @@ Create Renku blueprints — YAML files that define video generation workflows by
 10. **Voice IDs are model-specific — never declare as blueprint inputs.** Voice identifiers (e.g., `VoiceId`, `TalkingHeadVoiceId`) vary per TTS provider and model and are not portable across providers. Do NOT add them to the blueprint `inputs:` section. Users configure them in the `models` section of the input template (as model-level config or default input values).
 11. **Only add media tracks the user explicitly requested.** Narration/TTS, background music, and transcription/karaoke are NOT implicit requirements — they must be explicitly mentioned by the user. Never add them speculatively. Step 2 covers Style, Audience, and Duration structure only.
 12. **Director output schema must only contain fields wired to downstream producers.** Do not add structured "story arc" or narrative metadata objects whose fields are never used in connections. If you want the director to reason about story structure, guide it in the system prompt — not in the JSON schema. Only fields that flow through connections belong in the output schema.
+13. **Asset-only blueprints are first-class.** Do not add a timeline composer or video exporter unless the user explicitly wants composition or final rendering. A blueprint may legitimately end at published media artifacts plus JSON/markdown planning outputs.
 
 ## Prerequisites
 
@@ -68,6 +69,7 @@ When adding custom prompt producers, create subfolders:
 
 **Always use AskUserQuestion before designing.** Do not infer structure from existing blueprints and start building. Ask the user to confirm the following before proceeding:
 
+- What kind of endpoint do they want: published assets only, a compositing/timeline output, or a fully rendered final video?
 - What media types are needed? (video clips, images, narration audio, music, talking head, lipsync — list only what they mentioned and ask if anything else is needed)
 - Are there user-provided assets (images, reference photos, style images)? If so, how many and what are they for?
 - How many characters / segments / scenes are expected?
@@ -143,7 +145,7 @@ Based on the selected producers and director output schema, define:
 
 Use `imports:` for child blueprint references. Runtime build products are still `Artifact:...` values in manifests and event logs, but authored YAML should not use `artifacts:` anymore.
 
-Remember: top-level blueprints should declare required `Duration` and `NumOfSegments` when users provide them. `SegmentDuration` is derived and should not be exposed as a top-level user input, though prompt producers may declare it if they consume it.
+Remember: top-level blueprints should declare required `Duration` and `NumOfSegments` when users provide them. `SegmentDuration` is derived and should not be exposed as a top-level user input, though prompt producers may declare it if they consume it and root orchestration blueprints may still wire the derived value in connections.
 
 **User-provided image arrays:**
 When the user will supply multiple images of the same kind (e.g., 2–3 style reference images, a set of character photos), use an array input — not individual named inputs:
@@ -173,12 +175,18 @@ To give each producer instance **one specific element** (e.g., one celebrity pho
 ```
 See `celebrity-then-now` in the workspace for the full reference pattern.
 
+**Blueprint endpoint checklist** — choose the valid endpoint that matches the user's intent:
+- [ ] **Asset-only pipeline:** top-level outputs publish the media artifacts and any JSON/markdown planning metadata needed by a downstream compositor or agent. No timeline composer or exporter is required.
+- [ ] **Composition pipeline:** the blueprint ends at a timeline/composition artifact for another tool to render.
+- [ ] **Rendered video pipeline:** the blueprint continues through timeline composition and exporter to a final video artifact.
+
 **Artifacts completeness checklist** — work through every producer and verify each output is accounted for:
 - [ ] Every looped producer that produces a trackable output has a matching `array` artifact (e.g., `SegmentNarrationVideo`, `SegmentTalkingHeadVideo`, `SegmentNarrationAudio`, `SegmentTalkingHeadAudio`)
 - [ ] Array artifacts use `countInput: NumOfSegments` (or the appropriate loop count input)
 - [ ] Scalar (non-looped) producer outputs that need tracking have a scalar artifact (e.g., `CharacterImage`)
-- [ ] The final rendered output is declared (e.g., `FinalVideo`, `Timeline`)
-- [ ] Each declared artifact has a corresponding `to: ArtifactName[segment]` connection wired from its producer
+- [ ] If the blueprint is asset-only, any published JSON or markdown planning outputs are also declared and wired
+- [ ] If the blueprint is rendered, the final rendered output is declared (e.g., `FinalVideo`, `Timeline`)
+- [ ] Each declared output has a corresponding connection wired from its producer or imported child blueprint
 
 **Never add as blueprint inputs:**
 - Voice identifiers (`VoiceId`, `TalkingHeadVoiceId`, etc.) — model-specific, configure in the `models` section of the input template instead (see Critical Rule 10)

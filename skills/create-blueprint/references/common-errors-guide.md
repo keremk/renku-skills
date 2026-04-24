@@ -760,6 +760,8 @@ export S3_BUCKET_NAME="your-bucket"
 
 **Fix:** Either remove the unused input or connect it.
 
+**Important:** Producer blueprints may legitimately declare contract inputs that are consumed implicitly by the producer runtime. Prioritize fixing W001 on top-level orchestration blueprints; do not "fix" a producer by deleting valid contract inputs.
+
 ---
 
 ### W002: Unused Artifact
@@ -767,6 +769,8 @@ export S3_BUCKET_NAME="your-bucket"
 **Warning:** An output is declared but nothing connects to it.
 
 **Fix:** Either remove the unused output or add a connection to it.
+
+**Important:** For asset-only blueprints, published top-level outputs are the intended endpoint. They do not need a timeline composer or exporter downstream; they only need to be wired from the producer or child blueprint that generates them.
 
 ---
 
