@@ -26,6 +26,17 @@ Wire consumers directly from the producer that creates the reference:
   to: ReferenceClipProducer[segment][character].ReferenceImages
 ```
 
+For Seedance reference workflows, the reference inputs may include any supplied mix of `ReferenceImages`, `ReferenceVideos`, and `ReferenceAudios`. Wire only the modalities the producer contract declares and the graph actually provides. Provider payloads are schema-driven: Seedance maps those fan-in inputs to plain arrays like `image_urls`, `video_urls`, and `audio_urls`; Kling O3 can map grouped references into nested paths such as `elements[].frontal_image_url` and `elements[].reference_image_urls`.
+
+When multiple generated references should become one provider array, use explicit fan-in grouping instead of a synthetic fixed slot:
+
+```yaml
+- from: HistoricalPortraitProducer[historicalcharacter].GeneratedImage
+  to: ReferenceClipProducer[segment].ReferenceImages
+  groupBy: singleton
+  orderBy: historicalcharacter
+```
+
 Publish the same reference separately if the user needs to inspect or reuse it:
 
 ```yaml

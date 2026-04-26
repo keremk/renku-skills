@@ -117,6 +117,16 @@ This makes Kling especially useful for:
 - scene extension
 - character continuity from a known frame
 
+### E. Reference-to-video labels in Renku
+
+When the active producer is Kling O3 reference-to-video, prompt labels come from the final schema-projected payload:
+
+- top-level `image_urls[0]` is `@Image1`
+- `elements[0]` is `@Element1`
+- grouped element inputs may populate `frontal_image_url`, `reference_image_urls`, and optional `video_url` on the same element object
+
+Use only labels for references the graph actually supplies. Do not invent `@Element1` or `@Image1` when the matching payload entry is absent.
+
 ## 5. What the sources emphasize most
 
 - shot labeling matters

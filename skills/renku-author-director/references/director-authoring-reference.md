@@ -144,6 +144,7 @@ Before finalizing:
 - Every schema field must be either wired, used in a condition, or intentionally published.
 - Loop arrays must match blueprint loop counts.
 - Fixed-index condition paths such as `ImagePlans[0]` and `ImagePlans[1]` must be produced in every segment where the condition may be evaluated.
+- Selection fields for historical characters or other reference subjects must be explicit schema data consumed by graph bindings; do not rely on array position, aliases, or canonical ID text to identify selected references.
 
 ## Conditional Fields
 
@@ -164,6 +165,7 @@ Include:
 - narrative or informational arc,
 - visual consistency anchors,
 - model-workflow prompt rules from `renku-write-prompts`,
+- reference-label rules for the active provider: Seedance uses supplied-media labels such as `@Image1`, `@Video1`, and `@Audio1`; Kling O3 uses top-level image labels such as `@Image1` and grouped element labels such as `@Element1`; all label numbers follow the final projected payload order,
 - duration and word-count constraints,
 - branch-routing rules,
 - examples for complex branches.

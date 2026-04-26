@@ -257,9 +257,9 @@ Common patterns:
 - from: PlanDirector.AssetPlan.Segments[segment].Narration
   to: NarrationAudioProducer[segment].TextInput
 
-# Fixed slot in an input collection
+# Selected reference subject through declared dimensions
 - from: HistoricalPortraitProducer[historicalcharacter].GeneratedImage
-  to: ReferenceClipProducer[segment][historicalcharacter].ReferenceImages[0]
+  to: ReferenceClipProducer[segment][historicalcharacter].ReferenceImages
 
 # Published output
 - from: NarrationAudioProducer[segment].GeneratedAudio
@@ -267,6 +267,8 @@ Common patterns:
 ```
 
 Keep source and target dimensions compatible. Do not rely on string similarity or alias-like names.
+
+When a reference video should target selected historical characters, express the selection with declared graph dimensions and exact bindings. Do not hardcode `[0]` as the selected character, and do not infer the selected character from canonical IDs, producer names, or aliases.
 
 ### Constant-Index Subfield Caution
 
@@ -311,7 +313,27 @@ If a producer input is declared with `fanIn: true`, Renku infers grouped upstrea
   to: TimelineComposer.VideoClips
 ```
 
-The producer contract determines whether `TimelineComposer.VideoClips` is fan-in capable. If fan-in grouping is ambiguous, use explicit `groupBy` or adjust dimensions.
+The producer contract determines whether `TimelineComposer.VideoClips` is fan-in capable.
+
+Use explicit grouping when the consumer expects one grouped collection rather than one collection per upstream dimension:
+
+```yaml
+- from: HistoricalPortraitProducer[historicalcharacter].GeneratedImage
+  to: SeedanceReferenceClipProducer[segment].ReferenceImages
+  groupBy: singleton
+```
+
+Use explicit ordering when the consumer needs a stable array order from a dimension:
+
+```yaml
+- from: SegmentVideoProducer[segment].GeneratedVideo
+  to: TimelineComposer.VideoClips
+  orderBy: segment
+```
+
+Provider SDK mappings should name the provider field and let the model schema drive fan-in projection. For example, a fan-in input mapped to `image_urls` becomes a plain array when the schema says `image_urls` is an array; a mapping like `elements[].reference_image_urls` builds nested Kling O3 element arrays. Never infer canonical IDs or add alias-based fallbacks.
+
+Prompt labels follow projected payload order: Seedance uses `@Image1`, `@Video1`, and `@Audio1` from the final `image_urls`, `video_urls`, and `audio_urls` arrays; Kling O3 uses `@Image1` from `image_urls[0]` and `@Element1` from `elements[0]`.
 
 ## Conditions
 

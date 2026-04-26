@@ -58,13 +58,27 @@ Graph rule:
 
 Use when:
 
-- reference images define character identity, product identity, environment, or style,
+- supplied reference images, videos, or audio clips define character identity, product identity, environment, style, motion, or sound,
 - the references are not necessarily the first frame,
 - consistency across clips matters more than exact first-frame matching.
 
 Prompt rule:
 
 - assign explicit roles to references only if the producer exposes those references.
+- use modality labels such as `@Image1`, `@Video1`, and `@Audio1` only for media that is actually supplied by the graph.
+
+Payload rule:
+
+- provider payloads are projected from the producer mapping and the target model schema; do not reshape fan-in by hand.
+- plain schema arrays such as `image_urls` receive arrays, so final order determines labels like `@Image1` and `@Image2`.
+- nested Kling O3 paths such as `elements[].frontal_image_url` and `elements[].reference_image_urls` build one `elements[index]` object per fan-in group; `elements[0]` is `@Element1`.
+- scalar fields such as `start_image_url` and `end_image_url` require scalar bindings or an explicit transform such as `firstOf`; never silently take the first fan-in item.
+
+Graph rule:
+
+- when a clip targets selected historical characters or other selected reference subjects, represent the selection with declared dimensions and explicit bindings;
+- do not hardcode `[0]` as the selected subject;
+- do not infer selection from producer names, canonical IDs, aliases, or string similarity.
 
 ### Multi-Shot Video
 

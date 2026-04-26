@@ -195,6 +195,14 @@ This is especially useful for:
 
 This is where Seedance 2.0 becomes much more than a generic video model.
 
+In Renku, the Seedance reference workflow can receive any supplied mix of:
+
+- optional `ReferenceImages`
+- optional `ReferenceVideos`
+- optional `ReferenceAudios`
+
+Images are optional in this workflow too. Do not assume there is always an image reference just because the workflow is reference-driven.
+
 The fal guide describes support for:
 
 - up to 9 reference images
@@ -206,6 +214,7 @@ Operational rules:
 
 - assign each reference a role explicitly
 - refer to them in the prompt as `@Image1`, `@Image2`, `@Video1`, `@Audio1`, and so on
+- only mention labels for references that are actually supplied by the blueprint graph and producer contract
 - say what each reference contributes
 - ask the model to compose from those ingredients rather than vaguely "use the references"
 
@@ -270,19 +279,20 @@ For the skill:
 
 This matters for the skill inside this repo.
 
-Seedance 2.0 as a model supports richer multimodal reference workflows than the current generic Renku producer surface always exposes.
+Seedance 2.0 reference prompting must follow the actual Renku producer contract for the active graph.
 
 In the current catalog:
 
 - `video/text-to-video` exposes the text-to-video path
 - `video/image-to-video` exposes start image and end image
 - `video/start-end-frame-to-video` also supports the start/end-frame path
-- `video/ref-image-to-video` exposes image references
-- the generic producer layer does not currently expose Seedance 2.0's richer video-reference and audio-reference controls in the same way
+- Seedance reference workflows can expose optional `ReferenceImages`, `ReferenceVideos`, and `ReferenceAudios`
 
 So the skill should follow this rule:
 
-- only write `@Video1` or `@Audio1` style reference prompts when the active blueprint and producer contract actually expose those assets to the model call
+- write `@Image1`, `@Video1`, or `@Audio1` style reference labels only when that media item is actually wired into the model call
+- do not write `@Image1` when the reference workflow is using only video and audio references
+- keep numbering modality-local: the first supplied image is `@Image1`, the first supplied video is `@Video1`, and the first supplied audio clip is `@Audio1`
 
 Do not write prompts that assume capabilities the current blueprint cannot wire.
 
@@ -411,8 +421,10 @@ Animate a transition from the starting image to the ending image. [Subject or sc
 ### Reference-to-video prompt
 
 ```text
-@Image1 is [role]. @Image2 is [role]. @Video1 provides [motion or staging role]. @Audio1 provides [audio role]. Create [shot or sequence description]. The camera [movement]. [Sound behavior]. Keep the references consistent while composing one coherent result.
+@Image1 is [role]. @Video1 provides [motion or staging role]. @Audio1 provides [audio role]. Create [shot or sequence description]. The camera [movement]. [Sound behavior]. Keep the supplied references consistent while composing one coherent result.
 ```
+
+Omit any label whose media is not supplied. For example, a video-and-audio-only reference prompt should start with `@Video1` and `@Audio1`, not with an invented `@Image1`.
 
 ## 9. What the skill should ask the user
 

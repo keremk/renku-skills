@@ -65,6 +65,17 @@ Use element indexing only when each producer instance needs one specific element
   to: CharacterVideoProducer[character].ReferenceImages[0]
 ```
 
+For fan-in inputs, prefer explicit grouping and ordering when many upstream values should become one collection:
+
+```yaml
+- from: CharacterImages[character]
+  to: CharacterVideoProducer.ReferenceImages
+  groupBy: singleton
+  orderBy: character
+```
+
+For provider mappings, verify the validated payload shape follows the model schema: fan-in mapped to URI arrays should become plain arrays, nested paths such as `elements[].reference_image_urls` should become object arrays, and scalar fields should fail unless an explicit scalar transform is configured.
+
 ## Condition Path Failures
 
 If a condition path fails prepared/viewer validation:
@@ -73,6 +84,14 @@ If a condition path fails prepared/viewer validation:
 - verify fixed indexes like `[0]` and `[1]` are compatible with schema-derived array paths,
 - verify the director schema actually emits the field,
 - do not replace missing paths with fallback/default logic.
+
+## Reference Label And Binding Mismatches
+
+For Seedance reference workflows:
+
+- `ReferenceImages`, `ReferenceVideos`, and `ReferenceAudios` are optional inputs;
+- prompts should mention only supplied labels such as `@Image1`, `@Video1`, or `@Audio1`;
+- selected historical characters must come from declared graph dimensions and bindings, not hardcoded `[0]` slots or inferred names.
 
 ## Wrong Model Names
 
