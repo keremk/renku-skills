@@ -155,6 +155,23 @@ Operational rules:
 
 If the prompt describes multiple shots but the duration is too short, the model may compress or skip shots.
 
+#### Action-sequence multi-shot guidance
+
+Use this heavier structure for action sequences such as chases, fights, impacts, escapes, stunts, destruction, or similarly kinetic scenes. Do not force it onto calm dialogue, product, portrait, or atmospheric clips.
+
+For cinematic 15-second Seedance action sequences, an eight-stage structure often works well unless the requested shot breakdown already declares a different shot count. For each action shot, include:
+
+- camera scale or angle plus a lens millimeter value
+- subject action
+- environmental motion
+- SFX only when native audio is enabled or requested
+
+Vary camera scale, angle, movement, and lens millimeter values across action shots. Keep the environment in motion with scene-appropriate secondary movement such as debris, liquid, smoke, sparks, fabric, shadows, weather, or changing light.
+
+Do not collapse action into broad time blocks such as "0-5 seconds: run" or "5-10 seconds: slash." Write the visible progression through turns, falls, rebounds, impacts, landings, reveal moves, reaction beats, and the camera response.
+
+When the intended action clip should loop, make the final shot return visually toward the opening state or opening composition.
+
 ### D. Image-to-video
 
 Use when a starting image should anchor identity, layout, or visual composition.
@@ -404,6 +421,14 @@ Fix:
 Shot 1: [subject, action, camera, sound].
 Shot 2: [subject, action, camera, sound].
 Shot 3: [subject, action, camera, sound].
+```
+
+### Action-sequence multi-shot prompt
+
+```text
+Shot 1: [framing/angle + lens mm], [action beat], [environmental motion], [SFX if native audio is enabled].
+Shot 2: [different framing/angle + lens mm], [next visible action beat], [environmental motion], [SFX if native audio is enabled].
+Shot 3: [different framing/angle + lens mm], [next visible action beat], [environmental motion], [SFX if native audio is enabled].
 ```
 
 ### Image-to-video prompt

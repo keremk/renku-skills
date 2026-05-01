@@ -47,6 +47,18 @@ Operational structure:
 
 `Overall scene or master prompt + Shot 1 + Shot 2 + Shot 3`
 
+For Kling action-sequence prompts, do not blindly copy Seedance's eight-stage action template. This heavier guidance is for chases, fights, impacts, escapes, stunts, destruction, or similarly kinetic scenes. Do not force it onto calm dialogue, product, portrait, or atmospheric clips.
+
+Use the requested or supplied shot count, and prefer a clear 3-5 shot progression when the user has not asked for more. For each action shot, include:
+
+- framing or angle
+- lens millimeter value when useful or when the camera direction is underspecified
+- subject action
+- environmental motion
+- SFX or dialogue only when native audio is enabled or requested
+
+Keep the master scene sentence before the shot list so Kling has continuity anchors for characters, props, setting, and style.
+
 ### C. Dialogue structure
 
 The sources give explicit dialogue labeling rules.
@@ -90,6 +102,12 @@ The sources stress that Kling responds especially well to:
 - freezing
 - panning
 - movement synchronized to subject motion
+
+For action-sequence prompts, do not collapse actions into broad time blocks such as "0-5 seconds: run" or "5-10 seconds: fight." Write the visible progression through the motion: turns, falls, rebounds, impacts, landings, reveals, reaction beats, and the camera's response to each beat.
+
+For action sequences, keep the environment active. A subject moving against a static background often reads as cheap or synthetic. Add scene-appropriate secondary motion such as dust, fabric, liquid, smoke, sparks, crowds, reflections, shadows, weather, or changing light.
+
+For action sequences, vary shot scale, angle, movement, and lens millimeter values across multi-shot prompts. Reuse stable character and reference labels, but avoid repeating the same camera setup unless the story requires it.
 
 ### C. Longer durations
 
@@ -198,13 +216,13 @@ Fix:
 [Scene]. [Subject action]. The camera [movement]. [Audio layer]. [Style and lighting].
 ```
 
-### Multi-shot prompt
+### Action-sequence multi-shot prompt
 
 ```text
 Overall scene: [summary].
-Shot 1: [framing, subject, motion].
-Shot 2: [framing, subject, motion].
-Shot 3: [framing, subject, motion].
+Shot 1: [framing/angle + lens mm], [subject action], [environmental motion], [SFX/dialogue if native audio is enabled].
+Shot 2: [different framing/angle + lens mm], [next visible action beat], [environmental motion], [SFX/dialogue if native audio is enabled].
+Shot 3: [different framing/angle + lens mm], [next visible action beat or resolution], [environmental motion], [SFX/dialogue if native audio is enabled].
 ```
 
 ### Dialogue prompt
